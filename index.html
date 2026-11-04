@@ -24,6 +24,11 @@ input:focus,select:focus{border-color:#748ffc}
 .label{font-size:13px;color:#868e96;font-weight:800;margin:14px 0 6px;text-align:left}
 .help{font-size:12.5px;color:#868e96;margin-top:16px;line-height:1.6}
 .code{font-size:44px;font-weight:900;letter-spacing:8px;color:#4c6ef5;background:#edf2ff;border-radius:18px;padding:8px 0;margin:6px 0}
+#lobby{position:fixed;top:12px;left:12px;z-index:25;pointer-events:none}
+.lobbyPanel{pointer-events:auto;width:min(320px,88vw);padding:16px 18px;border-radius:24px;max-height:calc(100vh - 24px)}
+.lobbyPanel .code{font-size:32px;letter-spacing:6px}
+.lobbyPanel .btn{font-size:16px;padding:10px}
+#lobbyTip{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:12;color:#fff;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.35);background:rgba(30,30,80,.45);padding:8px 16px;border-radius:16px;pointer-events:none;font-size:14px;white-space:nowrap}
 #plist{list-style:none;text-align:left;margin-top:6px;max-height:240px;overflow:auto}
 #plist li{padding:8px 12px;border-radius:12px;background:#f8f9fa;margin-bottom:6px;font-weight:800;display:flex;align-items:center;gap:10px;color:#333}
 .dot{width:16px;height:16px;border-radius:50%;flex:none;border:2px solid rgba(0,0,0,.15)}
@@ -88,8 +93,8 @@ input:focus,select:focus{border-color:#748ffc}
 </div>
 
 <!-- LOBBY -->
-<div id="lobby" class="screen hidden">
-  <div class="panel">
+<div id="lobby" class="hidden">
+  <div class="panel lobbyPanel">
     <div id="codeWrap">
       <div class="label" style="text-align:center">방 코드 — 친구에게 알려주세요</div>
       <div class="code" id="codeShow">-----</div>
@@ -102,11 +107,14 @@ input:focus,select:focus{border-color:#748ffc}
       <select id="botSel"><option value="0">봇 없음</option><option value="8">8명까지</option><option value="12" selected>12명까지</option><option value="16">16명까지</option></select>
       <button class="btn b-pink" id="btnStart">🚀 게임 시작</button>
     </div>
-    <div id="waitMsg" class="sub" style="margin-top:14px">호스트가 게임을 시작하길 기다리는 중…</div>
+    <div id="hostMsg" class="sub" style="margin:10px 0 0;font-size:13px">친구들이 다 들어오면 시작을 눌러주세요</div>
+    <div id="waitMsg" class="sub" style="margin-top:14px">⏳ 방장이 게임을 시작하길 기다리는 중…</div>
     <button class="btn b-gray" id="btnLeave" style="font-size:15px;padding:9px">나가기</button>
     <div class="err" id="lobbyErr"></div>
   </div>
 </div>
+
+<div id="lobbyTip" class="hidden">🦏 대기실 — 자유롭게 뛰어놀며 기다리세요 (WASD · Space · Shift)</div>
 
 <!-- RESULTS -->
 <div id="results" class="screen hidden" style="background:rgba(30,30,90,.35)">
@@ -404,6 +412,27 @@ function buildR3(rng){
   cp(138,0,17.2);
   C.startZ=8; C.endZ=152;
 }
+function buildLobbyWorld(){
+  newCourse();
+  plat(0,0,0,28,2,28,0xff8fab); plat(0,2.5,-18,12,2,6,0x74c0fc); plat(-17,1.2,0,6,2,12,0xffe066); plat(17,1.2,0,6,2,12,0x8ce99a);
+  pad(-8,0,-8); pad(8,0,-8); pad(0,0,9);
+  sweeper(0,0,0,4.5,.8,0xff4d6d);
+  powerup(-9,0,6); powerup(9,0,6);
+  cp(0,-6,0);
+  C.lobby=true;
+}
+function lobbySpawn(){ const a=Math.random()*Math.PI*2, d=7+Math.random()*4; return new V3(Math.cos(a)*d,R+.2,Math.sin(a)*d-2); }
+function syncLobbyRacers(){
+  if(S.mode!=='lobby')return;
+  const ids=[...S.roster.values()].filter(p=>!p.bot).map(p=>p.id);
+  for(const [id,r] of racers) if(!ids.includes(id)){ scene.remove(r.rh.root); racers.delete(id); }
+  for(const id of ids) if(!racers.has(id)){ const r=createRacer(id,S.roster.get(id),id===S.myId); const sp=lobbySpawn(); r.pos.copy(sp); r.tp.copy(sp); r.prev.copy(sp); if(r.body)r.body.p.copy(sp); }
+}
+function updateLobby(now,dt){
+  const T=now/1000, me=racers.get(S.myId), inp=localInput();
+  if(me&&me.body){ stepBody(me.body,inp,dt,T,true); pushApart(me.body); updateItemHud(me.body); }
+  netTick(now);
+}
 function buildCourse(r,seed){
   newCourse(); const rng=mulberry32(seed);
   [null,buildR1,buildR2,buildR3][r](rng);
@@ -590,7 +619,7 @@ function beginRound(m){
     if(S.isHost&&info.bot){ r.bot={wi:0,tx:0,skill:.86+Math.random()*.13,st:0,lastZ:-99}; pickLane(r); }
   });
   S.roundStart=performance.now()-m.el*1000;
-  for(const id of ['menu','lobby','results','win']) $(id).classList.add('hidden');
+  for(const id of ['menu','lobby','results','win','lobbyTip']) $(id).classList.add('hidden');
   $('hud').classList.remove('hidden'); if(isTouch)$('touch').classList.remove('hidden');
   $('hRound').textContent=`라운드 ${m.r}/3 · ${ROUND_NAMES[m.r]}`;
   setupProgress(); updateQual(); updateItemHud(null); camInit=false; camYaw=0;
@@ -603,8 +632,9 @@ function hostFinish(id){
   S.places.push(id);
   if(S.round===3){ S.ended=true; const m={t:'win',id}; bcast(m); onWin(m); return; }
   const m={t:'fin',id,place:S.places.length}; bcast(m); onFin(m);
-  if(S.places.length>=S.quota||S.places.length>=S.alive.length) endRound();
+  if(S.places.length>=S.quota||S.places.length>=S.alive.length||humansDone()) endRound();
 }
+function humansDone(){ const hs=S.alive.filter(id=>!(S.roster.get(id)||{}).bot); return hs.length>0&&hs.every(id=>S.places.includes(id)); }
 function progressOf(id){ const r=racers.get(id); return r?(r.body?r.body.p.z:r.pos.z):-999; }
 function endRound(){
   if(!S.isHost||S.ended)return; S.ended=true;
@@ -618,7 +648,7 @@ function nm(id){ const p=S.roster.get(id); return p?p.name:'???'; }
 function onFin(m){
   if(!S.places.includes(m.id))S.places.push(m.id);
   updateQual();
-  if(m.id===S.myId){ setCenter('통과! 🎉',`${m.place}위로 결승선 통과`,2.5); sfx('fin'); const r=racers.get(m.id); if(r)burst(r.pos,60); }
+  if(m.id===S.myId){ S.myDone=true; updateQual(); setCenter('골인! 🎉',`${m.place}위 — 라운드 통과! 다른 선수를 기다리는 중`,3); sfx('fin'); const r=racers.get(m.id); if(r)burst(r.pos,60); }
   else toast(`✅ ${nm(m.id)} 통과 (${m.place}위)`);
 }
 function onRes(m){
@@ -652,8 +682,7 @@ function onWin(m){
 }
 function backToLobby(){
   for(const [id,p] of S.roster) if(p.bot) S.roster.delete(id);
-  S.mode='lobby'; S.inRound=false; clearRacers(); buildCourse(1,1234);
-  $('hud').classList.add('hidden'); $('touch').classList.add('hidden'); $('results').classList.add('hidden'); $('win').classList.add('hidden');
+  S.mode='back'; $('results').classList.add('hidden'); $('win').classList.add('hidden');
   showLobby();
 }
 
@@ -697,15 +726,15 @@ function lobbyMsg(){ return {t:'lobby',players:rosterArr(),inGame:S.mode==='game
 function dropPlayer(id){
   if(!NET.conns.has(id)&&!S.roster.has(id))return;
   NET.conns.delete(id); S.roster.delete(id);
-  if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); return; }
+  if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); syncLobbyRacers(); return; }
   const r=racers.get(id); if(r){scene.remove(r.rh.root);racers.delete(id);}
   if(S.alive.includes(id)){ S.alive=S.alive.filter(x=>x!==id); S.quota=Math.min(S.quota,Math.max(1,S.alive.length)); bcast({t:'left',id,quota:S.quota});
-    if(S.inRound&&!S.ended&&S.alive.length&&S.places.length>=Math.min(S.quota,S.alive.length)) endRound(); }
+    if(S.inRound&&!S.ended&&S.alive.length&&(S.places.length>=Math.min(S.quota,S.alive.length)||humansDone())) endRound(); }
   toast(`👋 ${nm(id)} 퇴장`);
 }
 function hostHandle(id,m,conn){
   if(m.t==='hello'){ addHuman(id,m.name); toast(`🙌 ${m.name} 입장`);
-    if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); }
+    if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); syncLobbyRacers(); }
     else{ const base=S.roundMsgBase; conn.send({...base,roster:rosterArr(),alive:S.alive,el:(performance.now()-S.roundStart)/1000}); for(const d of (C?C.doors:[])) if(!d.alive) conn.send({t:'door',i:d.id}); }
   } else if(m.t==='st'){ const r=racers.get(id); if(r&&!r.body){ r.tp.set(m.s[0],m.s[1],m.s[2]); r.tyaw=m.s[3]; r.flag=m.s[4]; } }
   else if(m.t==='fin'){ hostFinish(id); }
@@ -713,8 +742,7 @@ function hostHandle(id,m,conn){
 }
 function clientHandle(m){
   if(m.t==='lobby'){ S.roster.clear(); for(const [id,name,color,bot] of m.players) S.roster.set(id,{id,name,color,bot:!!bot});
-    if(S.mode==='menu'||S.mode==='lobby'||m.back){ if(m.back){ backToLobby(); } else showLobby(); }
-    else renderLobby(); }
+    if(m.back) backToLobby(); else if(S.mode!=='game') showLobby(); }
   else if(m.t==='round'){ beginRound(m); }
   else if(m.t==='snap'){ for(const [id,x,y,z,yaw,f] of m.s){ if(id===S.myId)continue; const r=racers.get(id); if(!r)continue; r.tp.set(x,y,z); r.tyaw=yaw; r.flag=f; } }
   else if(m.t==='fin'){ onFin(m); }
@@ -726,7 +754,7 @@ function clientHandle(m){
 function netTick(now){
   if(S.solo||now-S.lastSend<66)return; S.lastSend=now;
   const rd=v=>Math.round(v*100)/100;
-  if(S.isHost){ const s=[]; for(const id of S.alive){ const r=racers.get(id); if(!r)continue; const p=r.body?r.body.p:r.tp;
+  if(S.isHost){ const s=[]; const ids=S.mode==='lobby'?[...S.roster.values()].filter(p=>!p.bot).map(p=>p.id):S.alive; for(const id of ids){ const r=racers.get(id); if(!r)continue; const p=r.body?r.body.p:r.tp;
       s.push([id,rd(p.x),rd(p.y),rd(p.z),rd(r.body?r.body.yaw:r.tyaw),r.body?flagsOf(r.body):r.flag]); }
     bcast({t:'snap',s});
   } else { const r=racers.get(S.myId); if(r&&r.body){ const b=r.body; toHost({t:'st',s:[rd(b.p.x),rd(b.p.y),rd(b.p.z),rd(b.yaw),flagsOf(b)]}); } }
@@ -736,10 +764,16 @@ function netTick(now){
 function getName(){ const n=$('nameIn').value.trim()||('코뿔소'+Math.floor(Math.random()*90+10)); try{localStorage.setItem('rr_name',n);}catch(e){} return n; }
 try{ $('nameIn').value=localStorage.getItem('rr_name')||''; }catch(e){}
 { const q=new URLSearchParams(location.search).get('room'); if(q) $('codeIn').value=q.toUpperCase(); }
-function showLobby(){ S.mode='lobby'; $('menu').classList.add('hidden'); $('lobby').classList.remove('hidden'); renderLobby(); }
+function showLobby(){
+  const fresh=S.mode!=='lobby'; S.mode='lobby'; S.inRound=false;
+  $('menu').classList.add('hidden'); $('lobby').classList.remove('hidden'); $('lobbyTip').classList.remove('hidden');
+  $('hud').classList.add('hidden'); if(isTouch)$('touch').classList.remove('hidden');
+  if(fresh){ clearRacers(); buildLobbyWorld(); camInit=false; camYaw=0; }
+  renderLobby(); syncLobbyRacers();
+}
 function renderLobby(){
   $('codeWrap').classList.toggle('hidden',S.solo); $('codeShow').textContent=NET.code;
-  $('hostOpts').classList.toggle('hidden',!S.isHost); $('waitMsg').classList.toggle('hidden',S.isHost);
+  $('hostOpts').classList.toggle('hidden',!S.isHost); $('waitMsg').classList.toggle('hidden',S.isHost); $('hostMsg').classList.toggle('hidden',S.solo);
   const ps=[...S.roster.values()].filter(p=>!p.bot); $('pcount').textContent=`(${ps.length}명)`;
   $('plist').innerHTML=ps.map((p,i)=>`<li><span class="dot" style="background:${hex(p.color)}"></span>${p.name}${p.id===S.myId?' (나)':''}${i===0?' 👑':''}</li>`).join('');
 }
@@ -751,7 +785,7 @@ $('btnCopy').onclick=()=>{ const url=location.href.split('?')[0]+'?room='+NET.co
   navigator.clipboard?.writeText(txt).then(()=>{$('btnCopy').textContent='✅ 복사됨!';setTimeout(()=>$('btnCopy').textContent='🔗 초대 링크 복사',1500);}).catch(()=>prompt('복사하세요',txt)); };
 $('btnLeave').onclick=()=>{ location.href=location.pathname; };
 $('btnStart').onclick=()=>{
-  initAudio(); const fill=+$('botSel').value; const humans=[...S.roster.values()].filter(p=>!p.bot);
+  if(S.mode!=='lobby')return; initAudio(); const fill=+$('botSel').value; const humans=[...S.roster.values()].filter(p=>!p.bot);
   const names=BOT_NAMES.slice().sort(()=>Math.random()-.5); let k=0;
   while(S.roster.size<fill){ const id='bot'+k; S.roster.set(id,{id,name:names[k%names.length],color:COLORS[S.roster.size%COLORS.length],bot:true}); k++; }
   S.alive=[...S.roster.keys()]; if(!humans.length)return; startRound(1);
@@ -761,7 +795,7 @@ $('btnSpec').onclick=()=>{ S.specIdx++; };
 let centerUntil=0;
 function setCenter(t,sub,dur){ const el=$('center'); el.innerHTML=t+(sub?`<small>${sub}</small>`:''); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); centerUntil=performance.now()+dur*1000; }
 function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; $('toasts').appendChild(d); setTimeout(()=>d.remove(),3200); while($('toasts').children.length>5)$('toasts').firstChild.remove(); }
-function updateQual(){ $('hQual').textContent=S.round===3?'👑 황금 문을 먼저!':`통과 ${S.places.length}/${S.quota}`; }
+function updateQual(){ $('hQual').textContent=S.round===3?'👑 황금 문을 먼저 터뜨려라!':S.myDone||S.places.includes(S.myId)?'✅ 골인 완료!':!S.alive.includes(S.myId)?'👀 관전 중':`🏁 골인하면 통과! (남은 자리 ${Math.max(0,S.quota-S.places.length)})`; }
 function updateItemHud(b){ $('hItem').textContent=b&&b.item?`${ITEM_NAMES[b.item]} (E)`:'아이템 없음'; $('tItem').style.opacity=b&&b.item?1:.4; }
 let progDots=new Map();
 function setupProgress(){ const pr=$('progress'); pr.querySelectorAll('.pd').forEach(e=>e.remove()); progDots.clear();
@@ -769,11 +803,12 @@ function setupProgress(){ const pr=$('progress'); pr.querySelectorAll('.pd').for
 
 /* ================= INPUT ================= */
 const keys={}; let pJump=false,pDive=false,pItem=false;
-addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT')return; keys[e.code]=true;
+addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT')return; if(e.target.tagName==='BUTTON'||e.target.tagName==='SELECT')e.target.blur(); keys[e.code]=true;
   if(e.code==='Space'){pJump=true;e.preventDefault();} if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')pDive=true;
   if(e.code==='KeyE'||e.code==='KeyJ')pItem=true; if(e.code==='Tab'){S.specIdx++;e.preventDefault();}
   if(e.code.startsWith('Arrow'))e.preventDefault(); });
-addEventListener('keyup',e=>{keys[e.code]=false;});
+addEventListener('keyup',e=>{keys[e.code]=false; if(e.code==='Space'&&e.target.tagName!=='INPUT')e.preventDefault();});
+document.querySelectorAll('button,select').forEach(b=>{b.addEventListener('click',()=>{ if(b.tagName==='BUTTON')b.blur(); }); b.addEventListener('change',()=>b.blur());});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 let drag=null;
 renderer.domElement.addEventListener('pointerdown',e=>{ initAudio(); drag={id:e.pointerId,x:e.clientX,y:e.clientY}; });
@@ -825,7 +860,7 @@ function camTarget(){
   return list[((S.specIdx%list.length)+list.length)%list.length];
 }
 function updateCamera(dt,now){
-  if(S.mode!=='game'){ const t=now/1000*.07; camera.position.set(Math.sin(t)*75,38,75+Math.cos(t)*75); camera.lookAt(0,4,76); sun.position.set(25,80,40); sun.target.position.set(0,0,76); return; }
+  if(S.mode!=='game'&&S.mode!=='lobby'){ const t=now/1000*.07; camera.position.set(Math.sin(t)*75,38,75+Math.cos(t)*75); camera.lookAt(0,4,76); sun.position.set(25,80,40); sun.target.position.set(0,0,76); return; }
   const tr=camTarget(); if(!tr)return;
   if(!camInit){camFocus.copy(tr.pos);camInit=true;} else camFocus.lerp(tr.pos,1-Math.exp(-9*dt));
   const cp=Math.cos(camPitch), sp=Math.sin(camPitch);
@@ -845,11 +880,11 @@ function updateGame(now,T,dt){
   if(now>centerUntil&&!ct) $('center').textContent='';
   // local player
   const me=racers.get(S.myId); const inp=localInput();
-  if(me&&me.body){ stepBody(me.body,inp,dt,T,true); pushApart(me.body);
+  if(me&&me.body&&!S.myDone){ stepBody(me.body,inp,dt,T,true); pushApart(me.body);
     if(!S.myDone&&!S.ended&&T>0){ let done=false;
       if(C.finish&&me.body.p.z>C.finish.z&&me.body.p.y>C.finish.y-1.5) done=true;
       if(C.golden){ const g=C.golden; if(Math.abs(me.body.p.z-g.z)<1&&Math.hypot(me.body.p.x-g.x,me.body.p.y-g.y)<g.r) done=true; }
-      if(done){ S.myDone=true; if(S.isHost)hostFinish(S.myId); else toHost({t:'fin'}); } }
+      if(done){ S.myDone=true; updateQual(); me.body.v.set(0,0,0); if(S.isHost)hostFinish(S.myId); else toHost({t:'fin'}); } }
     if(inp.item||me.body.item===null) updateItemHud(me.body);
   }
   // bots (host)
@@ -881,7 +916,7 @@ function frame(now){
   const dt=Math.min((now-last)/1000,1/20); last=now;
   const T=S.mode==='game'?(now-S.roundStart)/1000:now/1000;
   if(C)updateCourse(T,dt);
-  if(S.mode==='game'&&S.inRound)updateGame(now,T,dt);
+  if(S.mode==='game'&&S.inRound)updateGame(now,T,dt); else if(S.mode==='lobby'&&C&&C.lobby)updateLobby(now,dt);
   updateRacerVisuals(dt); updateParts(dt); updateCamera(dt,now);
   if(window._islands) for(const g of window._islands){ g.rotation.y+=dt*g.userData.sp*.3; g.position.y=g.userData.y0+Math.sin(now/1000*g.userData.sp)*1.5; }
   if(window._clouds) window._clouds.position.x=Math.sin(now/20000)*10;
