@@ -70,7 +70,7 @@ input:focus,select:focus{border-color:#748ffc}
 #tDive{width:66px;height:66px;right:120px;bottom:70px}
 #tItem{width:58px;height:58px;right:28px;bottom:222px}
 </style>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/mqtt@5/dist/mqtt.min.js"></script>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
 </head>
 <body>
@@ -686,45 +686,64 @@ function backToLobby(){
   showLobby();
 }
 
-/* ================= NETWORK ================= */
-const NET={peer:null,conns:new Map(),host:null,code:''};
-function peerOpts(){ const q=new URLSearchParams(location.search), o={debug:1};
-  if(q.get('peerhost')){o.host=q.get('peerhost');o.port=+q.get('peerport')||9000;o.path=q.get('peerpath')||'/';o.secure=q.get('peersecure')==='1';} return o; }
-function bcast(m){ for(const c of NET.conns.values()) if(c.open) try{c.send(m);}catch(e){} }
-function toHost(m){ if(NET.host&&NET.host.open) try{NET.host.send(m);}catch(e){} }
+/* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
+const BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
+const NET={cli:null,code:'',base:'',conns:new Map(),hostSeen:0,joined:false};
+const codeBroker=c=>[...c].reduce((a,ch)=>a+ch.charCodeAt(0),0)%BROKERS.length;
+function brokerUrl(i){ return new URLSearchParams(location.search).get('broker')||BROKERS[i]; }
 function randCode(){ const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<5;i++)s+=a[Math.floor(Math.random()*a.length)]; return s; }
-function needPeer(){ if(!window.Peer){ $('menuErr').textContent='멀티플레이 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인하세요.'; return false;} return true; }
+function randId(){ return 'u'+Math.random().toString(36).slice(2,9); }
+function pub(topic,m){ if(NET.cli&&NET.cli.connected) try{ NET.cli.publish(topic,JSON.stringify(m),{qos:0}); }catch(e){} }
+function bcast(m){ if(!S.solo&&S.isHost) pub(NET.base+'/a',m); }
+function sendTo(id,m){ pub(NET.base+'/c/'+id,m); }
+function toHost(m){ pub(NET.base+'/h',{...m,f:S.myId}); }
+function needNet(){ if(!window.mqtt){ $('menuErr').textContent='멀티플레이 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침 해주세요.'; return false;} return true; }
 function addHuman(id,name){ S.roster.set(id,{id,name:name||'플레이어',color:COLORS[[...S.roster.values()].length%COLORS.length],bot:false}); }
-function hostGame(){
-  if(!needPeer())return; S.myName=getName(); $('menuErr').textContent='방을 만드는 중…';
-  const code=randCode(); const peer=new Peer('rhrush-'+code,peerOpts()); NET.peer=peer; NET.code=code;
-  peer.on('open',id=>{ S.myId=id; S.isHost=true; S.solo=false; S.roster.clear(); addHuman(id,S.myName); $('menuErr').textContent=''; showLobby(); });
-  peer.on('connection',conn=>{
-    conn.on('open',()=>NET.conns.set(conn.peer,conn));
-    conn.on('data',d=>hostHandle(conn.peer,d,conn));
-    conn.on('close',()=>dropPlayer(conn.peer));
-    conn.on('error',()=>dropPlayer(conn.peer));
+function connectBroker(i,will){
+  return new Promise((res,rej)=>{
+    const cli=mqtt.connect(brokerUrl(i),{clientId:'rr_'+S.myId+'_'+Math.random().toString(36).slice(2,6),clean:true,keepalive:20,reconnectPeriod:2000,connectTimeout:7000,will});
+    const t=setTimeout(()=>{ try{cli.end(true);}catch(e){} rej(new Error('timeout')); },8000);
+    cli.once('connect',()=>{ clearTimeout(t); res(cli); });
   });
-  peer.on('error',e=>{ if(e.type==='unavailable-id'){peer.destroy();hostGame();return;} $('menuErr').textContent='연결 오류: '+e.type; $('lobbyErr').textContent='연결 오류: '+e.type; });
-  peer.on('disconnected',()=>{ try{peer.reconnect();}catch(e){} });
 }
-function joinGame(code){
-  if(!needPeer())return; code=code.trim().toUpperCase(); if(code.length<5){$('menuErr').textContent='방 코드 5자리를 입력하세요';return;}
-  S.myName=getName(); $('menuErr').textContent='방에 접속하는 중…';
-  const peer=new Peer(peerOpts()); NET.peer=peer; NET.code=code;
-  const to=setTimeout(()=>{ if(S.mode==='menu')$('menuErr').textContent='접속 시간 초과 — 코드를 확인하세요'; },12000);
-  peer.on('open',id=>{ S.myId=id; S.isHost=false; S.solo=false;
-    const conn=peer.connect('rhrush-'+code,{reliable:true}); NET.host=conn;
-    conn.on('open',()=>{ clearTimeout(to); conn.send({t:'hello',name:S.myName}); $('menuErr').textContent=''; });
-    conn.on('data',d=>clientHandle(d));
-    conn.on('close',()=>hostLost());
+async function hostGame(){
+  if(!needNet())return; S.myName=getName(); S.myId=randId(); $('menuErr').textContent='방을 만드는 중…';
+  let code=randCode();
+  for(let k=0;k<BROKERS.length;k++){
+    const i=(codeBroker(code)+k)%BROKERS.length; while(codeBroker(code)!==i) code=randCode();
+    const base='rhinorush/v2/'+code;
+    try{ NET.cli=await connectBroker(i,{topic:base+'/a',payload:JSON.stringify({t:'hostgone'}),qos:0,retain:false}); NET.code=code; NET.base=base; break; }
+    catch(e){ $('menuErr').textContent='서버 연결 재시도 중… ('+(k+2)+'/'+BROKERS.length+')'; }
+  }
+  if(!NET.cli){ $('menuErr').textContent='중계 서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'; return; }
+  NET.cli.subscribe(NET.base+'/h');
+  NET.cli.on('message',(tp,buf)=>{ let m; try{m=JSON.parse(buf.toString());}catch(e){return;} if(!m.f||m.f===S.myId)return; NET.conns.set(m.f,performance.now()); hostHandle(m.f,m); });
+  NET.cli.on('reconnect',()=>{$('lobbyErr').textContent='연결 재시도 중…';}); NET.cli.on('connect',()=>{$('lobbyErr').textContent='';});
+  S.isHost=true; S.solo=false; S.roster.clear(); addHuman(S.myId,S.myName); $('menuErr').textContent=''; showLobby();
+  setInterval(()=>{ const now=performance.now(); for(const [id,t] of NET.conns) if(now-t>9000) dropPlayer(id); },2000);
+}
+async function joinGame(code){
+  if(!needNet())return; code=code.trim().toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==5){$('menuErr').textContent='방 코드 5자리를 입력하세요';return;}
+  if(NET.cli){ try{NET.cli.end(true);}catch(e){} NET.cli=null; }
+  S.myName=getName(); S.myId=randId(); NET.code=code; NET.base='rhinorush/v2/'+code; NET.joined=false;
+  $('menuErr').textContent='방에 접속하는 중…';
+  try{ NET.cli=await connectBroker(codeBroker(code),{topic:NET.base+'/h',payload:JSON.stringify({t:'bye',f:S.myId}),qos:0,retain:false}); }
+  catch(e){ $('menuErr').textContent='중계 서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'; return; }
+  S.isHost=false; S.solo=false;
+  NET.cli.on('message',(tp,buf)=>{ let m; try{m=JSON.parse(buf.toString());}catch(e){return;} NET.hostSeen=performance.now();
+    if(!NET.joined&&(m.t==='lobby'||m.t==='round')){ NET.joined=true; $('menuErr').textContent=''; }
+    if(NET.joined) clientHandle(m); });
+  NET.cli.subscribe([NET.base+'/a',NET.base+'/c/'+S.myId],()=>{
+    let tries=0; const hello=()=>{ if(NET.joined)return; if(++tries>4){ $('menuErr').textContent='방을 찾을 수 없어요. 코드를 확인하거나 방장이 방을 열어두었는지 확인하세요.'; try{NET.cli.end(true);}catch(e){} NET.cli=null; return; }
+      toHost({t:'hello',name:S.myName}); setTimeout(hello,1500); };
+    hello();
   });
-  peer.on('error',e=>{ clearTimeout(to); $('menuErr').textContent=e.type==='peer-unavailable'?'방을 찾을 수 없어요. 코드를 확인하세요.':'연결 오류: '+e.type; });
+  setInterval(()=>{ if(NET.joined&&S.mode!=='menu'&&performance.now()-NET.hostSeen>10000) hostLost(); },2000);
 }
-function hostLost(){ if(S.mode==='menu')return; alert('호스트와 연결이 끊어졌어요.'); location.href=location.pathname; }
+function hostLost(){ if(S.mode==='menu'||NET.lost)return; NET.lost=true; alert('방장과 연결이 끊어졌어요.'); location.href=location.pathname; }
 function lobbyMsg(){ return {t:'lobby',players:rosterArr(),inGame:S.mode==='game'}; }
 function dropPlayer(id){
-  if(!NET.conns.has(id)&&!S.roster.has(id))return;
+  if(!S.roster.has(id)){ NET.conns.delete(id); return; }
   NET.conns.delete(id); S.roster.delete(id);
   if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); syncLobbyRacers(); return; }
   const r=racers.get(id); if(r){scene.remove(r.rh.root);racers.delete(id);}
@@ -732,10 +751,11 @@ function dropPlayer(id){
     if(S.inRound&&!S.ended&&S.alive.length&&(S.places.length>=Math.min(S.quota,S.alive.length)||humansDone())) endRound(); }
   toast(`👋 ${nm(id)} 퇴장`);
 }
-function hostHandle(id,m,conn){
-  if(m.t==='hello'){ addHuman(id,m.name); toast(`🙌 ${m.name} 입장`);
+function hostHandle(id,m){
+  if(m.t==='bye'){ dropPlayer(id); return; }
+  if(m.t==='hello'){ if(S.roster.has(id)){ if(S.mode==='lobby')bcast(lobbyMsg()); return; } addHuman(id,m.name); toast(`🙌 ${m.name} 입장`);
     if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); syncLobbyRacers(); }
-    else{ const base=S.roundMsgBase; conn.send({...base,roster:rosterArr(),alive:S.alive,el:(performance.now()-S.roundStart)/1000}); for(const d of (C?C.doors:[])) if(!d.alive) conn.send({t:'door',i:d.id}); }
+    else{ const base=S.roundMsgBase; sendTo(id,{...base,roster:rosterArr(),alive:S.alive,el:(performance.now()-S.roundStart)/1000}); for(const d of (C?C.doors:[])) if(!d.alive) sendTo(id,{t:'door',i:d.id}); }
   } else if(m.t==='st'){ const r=racers.get(id); if(r&&!r.body){ r.tp.set(m.s[0],m.s[1],m.s[2]); r.tyaw=m.s[3]; r.flag=m.s[4]; } }
   else if(m.t==='fin'){ hostFinish(id); }
   else if(m.t==='door'){ breakDoor(m.i,false); bcast({t:'door',i:m.i}); }
@@ -749,10 +769,11 @@ function clientHandle(m){
   else if(m.t==='door'){ breakDoor(m.i,false); }
   else if(m.t==='res'){ onRes(m); }
   else if(m.t==='win'){ onWin(m); }
+  else if(m.t==='hostgone'){ hostLost(); }
   else if(m.t==='left'){ const r=racers.get(m.id); if(r){scene.remove(r.rh.root);racers.delete(m.id);} S.alive=S.alive.filter(x=>x!==m.id); S.quota=m.quota; updateQual(); }
 }
 function netTick(now){
-  if(S.solo||now-S.lastSend<66)return; S.lastSend=now;
+  if(S.solo||now-S.lastSend<90)return; S.lastSend=now;
   const rd=v=>Math.round(v*100)/100;
   if(S.isHost){ const s=[]; const ids=S.mode==='lobby'?[...S.roster.values()].filter(p=>!p.bot).map(p=>p.id):S.alive; for(const id of ids){ const r=racers.get(id); if(!r)continue; const p=r.body?r.body.p:r.tp;
       s.push([id,rd(p.x),rd(p.y),rd(p.z),rd(r.body?r.body.yaw:r.tyaw),r.body?flagsOf(r.body):r.flag]); }
