@@ -25,9 +25,17 @@ input:focus,select:focus{border-color:#748ffc}
 .help{font-size:12.5px;color:#868e96;margin-top:16px;line-height:1.6}
 .code{font-size:44px;font-weight:900;letter-spacing:8px;color:#4c6ef5;background:#edf2ff;border-radius:18px;padding:8px 0;margin:6px 0}
 #lobby{position:fixed;top:12px;left:12px;z-index:25;pointer-events:none}
-.lobbyPanel{pointer-events:auto;width:min(320px,88vw);padding:16px 18px;border-radius:24px;max-height:calc(100vh - 24px)}
-.lobbyPanel .code{font-size:32px;letter-spacing:6px}
-.lobbyPanel .btn{font-size:16px;padding:10px}
+.lobbyPanel{pointer-events:auto;width:min(250px,70vw);background:rgba(255,255,255,.9);border-radius:16px;padding:8px 10px;box-shadow:0 8px 24px rgba(30,30,110,.3);font-size:13px;color:#333}
+.lpHead{display:flex;justify-content:space-between;align-items:center;font-weight:900;color:#ff4d6d}
+.lpRow{display:flex;gap:6px;align-items:center;margin-top:6px}
+.lpLbl{font-size:11px;color:#868e96;font-weight:800;white-space:nowrap}
+.lpCode{font-size:18px;letter-spacing:3px;color:#4c6ef5;flex:1}
+.lpNote{font-size:11px;color:#5c6bc0;font-weight:800;margin-top:5px}
+.mini{border:none;border-radius:9px;padding:5px 9px;font-size:12px;font-weight:900;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.lobbyPanel select{padding:5px 6px;font-size:12px;border-radius:9px;border-width:2px;width:auto}
+#lobby #plist{max-height:84px;margin-top:6px}
+#lobby #plist li{display:inline-flex;padding:2px 7px;margin:0 3px 3px 0;font-size:11.5px;border-radius:9px;gap:4px}
+#lobby .dot{width:9px;height:9px;border-width:1px}
 #lobbyTip{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:12;color:#fff;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.35);background:rgba(30,30,80,.45);padding:8px 16px;border-radius:16px;pointer-events:none;font-size:14px;white-space:nowrap}
 #plist{list-style:none;text-align:left;margin-top:6px;max-height:240px;overflow:auto}
 #plist li{padding:8px 12px;border-radius:12px;background:#f8f9fa;margin-bottom:6px;font-weight:800;display:flex;align-items:center;gap:10px;color:#333}
@@ -39,7 +47,18 @@ input:focus,select:focus{border-color:#748ffc}
 #hRound{top:12px;left:12px;font-size:15px}
 #hTimer{top:12px;left:50%;transform:translateX(-50%);font-size:24px;min-width:90px;text-align:center}
 #hQual{top:12px;right:12px;font-size:16px}
-#hItem{bottom:18px;right:18px;font-size:16px;text-align:center;min-width:120px}
+#itemBox{position:fixed;bottom:16px;right:16px;z-index:12;display:flex;align-items:center;gap:10px;background:rgba(30,30,80,.55);backdrop-filter:blur(4px);padding:8px 14px 8px 8px;border-radius:20px;color:#fff;pointer-events:none;max-width:290px}
+#iSlot{width:62px;height:62px;flex:none;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
+#iSlot svg{width:56px;height:56px}
+#iSlot.has{animation:pop .4s;background:rgba(255,255,255,.3)}
+#iTxt b{display:block;font-size:16px}#iTxt small{display:block;font-size:12px;opacity:.9;font-weight:700}
+#iTxt kbd{display:inline-block;background:#fff;color:#333;border-radius:5px;padding:0 6px;font-weight:900;font-size:12px;margin-top:3px;font-family:inherit}
+#fxBar{position:fixed;bottom:96px;right:16px;z-index:12;display:flex;gap:6px;pointer-events:none}
+.fx{display:flex;align-items:center;gap:4px;background:rgba(30,30,80,.55);color:#fff;font-weight:900;font-size:13px;padding:3px 8px 3px 3px;border-radius:14px}
+.fx svg{width:26px;height:26px}
+#pickPop{position:fixed;left:50%;top:58%;transform:translateX(-50%);z-index:13;background:rgba(255,255,255,.95);border-radius:20px;padding:10px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);pointer-events:none;color:#333}
+#pickPop svg{width:58px;height:58px}#pickPop b{font-size:18px;display:block;color:#ff4d6d}#pickPop span{font-size:13px;font-weight:800}
+#tItem svg{width:40px;height:40px}
 #hHelp{bottom:12px;left:12px;font-size:12px;font-weight:700;opacity:.85}
 #progress{position:absolute;top:62px;left:50%;transform:translateX(-50%);width:min(520px,70vw);height:10px;background:rgba(255,255,255,.45);border-radius:6px}
 #progress .pd{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #fff;transition:left .2s linear}
@@ -68,7 +87,8 @@ input:focus,select:focus{border-color:#748ffc}
 .tb{position:absolute;pointer-events:auto;border-radius:50%;background:rgba(255,255,255,.35);border:3px solid rgba(255,255,255,.8);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 #tJump{width:84px;height:84px;right:24px;bottom:120px}
 #tDive{width:66px;height:66px;right:120px;bottom:70px}
-#tItem{width:58px;height:58px;right:28px;bottom:222px}
+#tItem{width:62px;height:62px;right:26px;bottom:222px}
+.touchOn #itemBox{bottom:auto;top:110px}.touchOn #fxBar{bottom:auto;top:190px}
 </style>
 <script src="https://unpkg.com/mqtt@5/dist/mqtt.min.js"></script>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
@@ -94,23 +114,19 @@ input:focus,select:focus{border-color:#748ffc}
 
 <!-- LOBBY -->
 <div id="lobby" class="hidden">
-  <div class="panel lobbyPanel">
-    <div id="codeWrap">
-      <div class="label" style="text-align:center">방 코드 — 친구에게 알려주세요</div>
-      <div class="code" id="codeShow">-----</div>
-      <button class="btn b-blue" id="btnCopy" style="font-size:15px;padding:9px">🔗 초대 링크 복사</button>
+  <div class="lobbyPanel" id="lobbyPanel">
+    <div class="lpHead"><span>🦏 대기실 <span id="pcount"></span></span><button class="mini b-gray" id="btnFold" title="접기/펼치기">－</button></div>
+    <div id="lpBody">
+      <div id="codeWrap" class="lpRow"><span class="lpLbl">방 코드</span><b id="codeShow" class="lpCode">-----</b><button class="mini b-blue" id="btnCopy">복사</button></div>
+      <ul id="plist"></ul>
+      <div id="hostOpts" class="lpRow">
+        <select id="botSel" title="빈 자리를 봇으로 채우기"><option value="0">봇 없음</option><option value="8">봇 8명까지</option><option value="12" selected>봇 12명까지</option><option value="16">봇 16명까지</option></select>
+        <button class="mini b-pink" id="btnStart" style="flex:1">🚀 시작</button>
+      </div>
+      <div id="hostMsg" class="lpNote">친구들이 다 들어오면 시작을 눌러주세요</div>
+      <div id="waitMsg" class="lpNote">⏳ 방장이 시작하길 기다리는 중…</div>
+      <div class="lpRow" style="justify-content:space-between"><button class="mini b-gray" id="btnLeave">나가기</button><span class="err" id="lobbyErr" style="margin:0;font-size:12px"></span></div>
     </div>
-    <div class="label">참가자 <span id="pcount"></span></div>
-    <ul id="plist"></ul>
-    <div id="hostOpts">
-      <div class="label">빈 자리를 봇으로 채우기</div>
-      <select id="botSel"><option value="0">봇 없음</option><option value="8">8명까지</option><option value="12" selected>12명까지</option><option value="16">16명까지</option></select>
-      <button class="btn b-pink" id="btnStart">🚀 게임 시작</button>
-    </div>
-    <div id="hostMsg" class="sub" style="margin:10px 0 0;font-size:13px">친구들이 다 들어오면 시작을 눌러주세요</div>
-    <div id="waitMsg" class="sub" style="margin-top:14px">⏳ 방장이 게임을 시작하길 기다리는 중…</div>
-    <button class="btn b-gray" id="btnLeave" style="font-size:15px;padding:9px">나가기</button>
-    <div class="err" id="lobbyErr"></div>
   </div>
 </div>
 
@@ -145,10 +161,13 @@ input:focus,select:focus{border-color:#748ffc}
   <div id="progress"><span class="flag">🏁</span></div>
   <div id="center"></div>
   <div id="toasts"></div>
-  <div class="pill" id="hItem">아이템 없음</div>
   <div class="pill" id="hHelp">WASD 이동 · Space 점프 · Shift 다이브 · E 아이템 · 드래그 시점</div>
   <div id="specBtn" class="hidden"><button class="btn b-blue" id="btnSpec">👀 다른 선수 관전</button></div>
 </div>
+
+<div id="itemBox" class="hidden"><div id="iSlot"></div><div id="iTxt"></div></div>
+<div id="fxBar"></div>
+<div id="pickPop" class="hidden"></div>
 
 <div id="touch" class="hidden">
   <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
@@ -296,9 +315,13 @@ function gateRow(z,top,width,n,rng){
   const beam=new THREE.Mesh(G.box,mat(0x343a40)); beam.scale.set(width+1,.5,.9); beam.position.set(0,top+3.55,z); courseGroup.add(beam);
   for(const s of[-1,1]){const p=new THREE.Mesh(G.box,mat(0x343a40)); p.scale.set(.5,3.8,.9); p.position.set(s*(width/2+.25),top+1.9,z); courseGroup.add(p);}
 }
+const qMat=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,128,128);g.addColorStop(0,'#ffe066');g.addColorStop(1,'#fab005');x.fillStyle=g;x.fillRect(0,0,128,128);
+  x.strokeStyle='#fff';x.lineWidth=10;x.strokeRect(5,5,118,118);x.font='900 92px sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.lineWidth=8;x.strokeStyle='#e8590c';x.strokeText('?',64,70);x.fillStyle='#fff';x.fillText('?',64,70);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshStandardMaterial({map:t,emissive:0x664400,emissiveIntensity:.35,roughness:.4});})();
 function powerup(x,top,z){
-  const m=new THREE.Mesh(G.box,mat(0xffd43b,{emissive:0xaa7700,emissiveIntensity:.5})); m.scale.setScalar(.95); m.position.set(x,top+1.3,z); m.castShadow=true; courseGroup.add(m);
-  const q=new THREE.Mesh(G.sph,mat(0xffffff,{emissive:0xffffff,emissiveIntensity:.6})); q.scale.setScalar(.62); m.add(q);
+  const m=new THREE.Mesh(G.box,qMat); m.scale.setScalar(1.1); m.position.set(x,top+1.3,z); m.castShadow=true; courseGroup.add(m);
   C.powerups.push({m,x,y:top+1.0,z,cd:0});
 }
 function finishLine(z,top,w){
@@ -430,7 +453,7 @@ function syncLobbyRacers(){
 }
 function updateLobby(now,dt){
   const T=now/1000, me=racers.get(S.myId), inp=localInput();
-  if(me&&me.body){ stepBody(me.body,inp,dt,T,true); pushApart(me.body); updateItemHud(me.body); }
+  if(me&&me.body){ stepBody(me.body,inp,dt,T,true); pushApart(me.body); updateItemHud(me.body); updateFx(me.body); }
   netTick(now);
 }
 function buildCourse(r,seed){
@@ -535,9 +558,15 @@ function stepBody(b,inp,dt,T,isMe){
   if(b.grounded) for(let i=b.cpi+1;i<C.cps.length;i++){ const c=C.cps[i]; if(b.p.z>=c.z&&b.p.y>=c.y-.5) b.cpi=i; }
   if(b.p.y<-28){ respawn(b); if(isMe){ sfx('fall'); toast('☁️ 추락! 체크포인트에서 다시 시작'); } }
   for(const pu of C.powerups){ if(pu.cd>0||b.item)continue;
-    if(Math.hypot(b.p.x-pu.x,b.p.y-pu.y,b.p.z-pu.z)<1.7){ pu.cd=6; b.item=['boost','jump','shield'][Math.floor(Math.random()*3)]; if(isMe){sfx('pick');updateItemHud(b);} } }
+    if(Math.hypot(b.p.x-pu.x,b.p.y-pu.y,b.p.z-pu.z)<1.7){ pu.cd=6; b.item=['boost','jump','shield'][Math.floor(Math.random()*3)]; if(isMe){sfx('pick');updateItemHud(b);showPickup(b.item);} } }
 }
-const ITEM_NAMES={boost:'⚡ 부스터',jump:'🌀 슈퍼점프',shield:'🛡️ 실드'};
+const ICON={
+ boost:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#ff922b" stroke="#fff" stroke-width="4"/><path d="M37 8 16 36h13l-5 20 23-30H34z" fill="#ffe066" stroke="#7a3b00" stroke-width="2.5" stroke-linejoin="round"/></svg>',
+ jump:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#37b24d" stroke="#fff" stroke-width="4"/><path d="M32 9 47 26H38v9H26v-9H17z" fill="#fff"/><path d="M20 41h24M22 47h20M20 53h24" stroke="#ebfbee" stroke-width="4" stroke-linecap="round"/></svg>',
+ shield:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#339af0" stroke="#fff" stroke-width="4"/><path d="M32 11 48 17v12c0 11-7 19-16 24-9-5-16-13-16-24V17z" fill="#e7f5ff" stroke="#1864ab" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 31l6 6 11-12" fill="none" stroke="#1971c2" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ none:'<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="10" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 5" opacity=".7"/><text x="32" y="44" text-anchor="middle" font-size="32" font-weight="900" fill="#fff" opacity=".7">?</text></svg>'};
+const ITEMS={boost:{n:'부스터',d:'3.5초 동안 엄청 빨리 달려요'},jump:{n:'슈퍼점프',d:'6초 동안 점프가 훨씬 높아져요'},shield:{n:'실드',d:'장애물에 맞아도 1번 버텨요'}};
+const ITEM_NAMES={boost:'부스터',jump:'슈퍼점프',shield:'실드'};
 function useItem(b,isMe){
   const it=b.item; b.item=null;
   if(it==='boost')b.boost=3.5; else if(it==='jump')b.sjump=6; else if(it==='shield')b.shield=8;
@@ -622,7 +651,7 @@ function beginRound(m){
   for(const id of ['menu','lobby','results','win','lobbyTip']) $(id).classList.add('hidden');
   $('hud').classList.remove('hidden'); if(isTouch)$('touch').classList.remove('hidden');
   $('hRound').textContent=`라운드 ${m.r}/3 · ${ROUND_NAMES[m.r]}`;
-  setupProgress(); updateQual(); updateItemHud(null); camInit=false; camYaw=0;
+  setupProgress(); updateQual(); itemKey=0; updateItemHud(null); updateFx(null); $('itemBox').classList.remove('hidden'); camInit=false; camYaw=0;
   const amAlive=m.alive.includes(S.myId);
   $('specBtn').classList.toggle('hidden',amAlive);
   if(!amAlive) toast('👀 관전 중 — 다음 게임을 기다려 주세요');
@@ -788,22 +817,24 @@ try{ $('nameIn').value=localStorage.getItem('rr_name')||''; }catch(e){}
 function showLobby(){
   const fresh=S.mode!=='lobby'; S.mode='lobby'; S.inRound=false;
   $('menu').classList.add('hidden'); $('lobby').classList.remove('hidden'); $('lobbyTip').classList.remove('hidden');
-  $('hud').classList.add('hidden'); if(isTouch)$('touch').classList.remove('hidden');
-  if(fresh){ clearRacers(); buildLobbyWorld(); camInit=false; camYaw=0; }
+  $('hud').classList.add('hidden'); if(isTouch){$('touch').classList.remove('hidden');document.body.classList.add('touchOn');}
+  if(fresh){ clearRacers(); buildLobbyWorld(); camInit=false; camYaw=0; itemKey=0; updateFx(null); }
+  $('itemBox').classList.remove('hidden'); updateItemHud(racers.get(S.myId)?.body||null);
   renderLobby(); syncLobbyRacers();
 }
 function renderLobby(){
   $('codeWrap').classList.toggle('hidden',S.solo); $('codeShow').textContent=NET.code;
   $('hostOpts').classList.toggle('hidden',!S.isHost); $('waitMsg').classList.toggle('hidden',S.isHost); $('hostMsg').classList.toggle('hidden',S.solo);
   const ps=[...S.roster.values()].filter(p=>!p.bot); $('pcount').textContent=`(${ps.length}명)`;
-  $('plist').innerHTML=ps.map((p,i)=>`<li><span class="dot" style="background:${hex(p.color)}"></span>${p.name}${p.id===S.myId?' (나)':''}${i===0?' 👑':''}</li>`).join('');
+  $('plist').innerHTML=ps.map((p,i)=>`<li><span class="dot" style="background:${hex(p.color)}"></span>${i===0?'👑':''}${p.name}${p.id===S.myId?'(나)':''}</li>`).join('');
 }
 $('btnHost').onclick=()=>{initAudio();hostGame();};
 $('btnJoin').onclick=()=>{initAudio();joinGame($('codeIn').value);};
 $('codeIn').addEventListener('keydown',e=>{ if(e.key==='Enter'){initAudio();joinGame($('codeIn').value);} });
 $('btnSolo').onclick=()=>{ initAudio(); S.myName=getName(); S.solo=true; S.isHost=true; S.myId='me'; S.roster.clear(); addHuman('me',S.myName); NET.code=''; showLobby(); };
 $('btnCopy').onclick=()=>{ const url=location.href.split('?')[0]+'?room='+NET.code; const txt=location.protocol==='file:'?NET.code:url;
-  navigator.clipboard?.writeText(txt).then(()=>{$('btnCopy').textContent='✅ 복사됨!';setTimeout(()=>$('btnCopy').textContent='🔗 초대 링크 복사',1500);}).catch(()=>prompt('복사하세요',txt)); };
+  navigator.clipboard?.writeText(txt).then(()=>{$('btnCopy').textContent='✅';setTimeout(()=>$('btnCopy').textContent='복사',1500);}).catch(()=>prompt('복사하세요',txt)); };
+$('btnFold').onclick=()=>{ const f=$('lpBody').classList.toggle('hidden'); $('btnFold').textContent=f?'＋':'－'; };
 $('btnLeave').onclick=()=>{ location.href=location.pathname; };
 $('btnStart').onclick=()=>{
   if(S.mode!=='lobby')return; initAudio(); const fill=+$('botSel').value; const humans=[...S.roster.values()].filter(p=>!p.bot);
@@ -817,7 +848,19 @@ let centerUntil=0;
 function setCenter(t,sub,dur){ const el=$('center'); el.innerHTML=t+(sub?`<small>${sub}</small>`:''); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); centerUntil=performance.now()+dur*1000; }
 function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; $('toasts').appendChild(d); setTimeout(()=>d.remove(),3200); while($('toasts').children.length>5)$('toasts').firstChild.remove(); }
 function updateQual(){ $('hQual').textContent=S.round===3?'👑 황금 문을 먼저 터뜨려라!':S.myDone||S.places.includes(S.myId)?'✅ 골인 완료!':!S.alive.includes(S.myId)?'👀 관전 중':`🏁 골인하면 통과! (남은 자리 ${Math.max(0,S.quota-S.places.length)})`; }
-function updateItemHud(b){ $('hItem').textContent=b&&b.item?`${ITEM_NAMES[b.item]} (E)`:'아이템 없음'; $('tItem').style.opacity=b&&b.item?1:.4; }
+let itemKey=null, fxKey=null, pickT=0;
+function updateItemHud(b){
+  const it=b&&b.item?b.item:null; if(it===itemKey)return; itemKey=it;
+  $('iSlot').innerHTML=ICON[it||'none']; $('iSlot').classList.toggle('has',!!it);
+  $('iTxt').innerHTML=it?`<b>${ITEMS[it].n}</b><small>${ITEMS[it].d}</small><kbd>${isTouch?'아이템 버튼':'E 키'}</kbd> 로 사용`:`<b>아이템 없음</b><small>노란 <b style="display:inline;font-size:12px">?</b> 상자를 먹으면<br>랜덤 아이템 획득!</small>`;
+  $('tItem').innerHTML=it?ICON[it]:'아이템'; $('tItem').style.opacity=it?1:.4;
+}
+function showPickup(it){ const el=$('pickPop'); el.innerHTML=`${ICON[it]}<div><b>아이템 획득!</b><span>${ITEMS[it].n} — ${isTouch?'아이템 버튼':'E 키'}로 사용</span></div>`; el.classList.remove('hidden'); el.style.animation='none'; void el.offsetWidth; el.style.animation='pop .35s'; clearTimeout(pickT); pickT=setTimeout(()=>el.classList.add('hidden'),2000); }
+function updateFx(b){
+  const fx=b?[['boost',b.boost],['jump',b.sjump],['shield',b.shield]].filter(f=>f[1]>0):[];
+  const key=fx.map(f=>f[0]+Math.ceil(f[1])).join(); if(key===fxKey)return; fxKey=key;
+  $('fxBar').innerHTML=fx.map(([k,t])=>`<div class="fx">${ICON[k]}${Math.ceil(t)}s</div>`).join('');
+}
 let progDots=new Map();
 function setupProgress(){ const pr=$('progress'); pr.querySelectorAll('.pd').forEach(e=>e.remove()); progDots.clear();
   for(const id of S.alive){ const p=S.roster.get(id); if(!p)continue; const d=document.createElement('div'); d.className='pd'+(id===S.myId?' me':''); d.style.background=hex(p.color); pr.appendChild(d); progDots.set(id,d); } }
@@ -906,7 +949,7 @@ function updateGame(now,T,dt){
       if(C.finish&&me.body.p.z>C.finish.z&&me.body.p.y>C.finish.y-1.5) done=true;
       if(C.golden){ const g=C.golden; if(Math.abs(me.body.p.z-g.z)<1&&Math.hypot(me.body.p.x-g.x,me.body.p.y-g.y)<g.r) done=true; }
       if(done){ S.myDone=true; updateQual(); me.body.v.set(0,0,0); if(S.isHost)hostFinish(S.myId); else toHost({t:'fin'}); } }
-    if(inp.item||me.body.item===null) updateItemHud(me.body);
+    updateItemHud(me.body); updateFx(me.body);
   }
   // bots (host)
   if(S.isHost) for(const r of racers.values()){ if(!r.bot)continue; const b=r.body;
