@@ -2,7 +2,7 @@
 
 구름 위 공중 코스에서 펼쳐지는 3D 멀티플레이 장애물 레이스 게임.
 
-**플레이:** https://tri-prepepper.github.io/rhino-rush/
+**플레이:** https://tri-prepepper.github.io/kangaroo-rush/
 
 - 방 만들기 → 방 코드(또는 초대 링크)를 친구에게 공유 → 대기실에서 기다렸다가 방장이 시작
 - WASD 이동 · Space 점프 · Shift 다이브 · E 아이템 · 마우스 드래그 시점
