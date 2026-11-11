@@ -24,7 +24,24 @@ input:focus,select:focus{border-color:#748ffc}
 .label{font-size:13px;color:#868e96;font-weight:800;margin:14px 0 6px;text-align:left}
 .help{font-size:12.5px;color:#868e96;margin-top:16px;line-height:1.6}
 .code{font-size:44px;font-weight:900;letter-spacing:8px;color:#4c6ef5;background:#edf2ff;border-radius:18px;padding:8px 0;margin:6px 0}
-#lobby{position:fixed;top:12px;left:12px;z-index:25;pointer-events:none}
+#lobby{position:fixed;top:12px;right:12px;z-index:25;pointer-events:none}
+#custom{position:fixed;top:12px;left:12px;z-index:25;pointer-events:none}
+.cPanel{max-height:calc(100vh - 80px);overflow-y:auto;width:min(260px,46vw)}
+.mini{white-space:nowrap}
+.touchOn .lobbyPanel{width:min(250px,47vw);font-size:11px;padding:7px 8px}
+.touchOn .cPanel{max-height:40vh}
+.touchOn #lobby .lobbyPanel{max-height:38vh;overflow-y:auto}
+.touchOn .lobbyPanel .mini{font-size:11px;padding:4px 6px}
+.touchOn .lpCode{font-size:14px;letter-spacing:1px}
+.touchOn .lobbyPanel select{font-size:11px;padding:3px 2px}
+.touchOn .swc{width:19px;height:19px}.touchOn .swa{min-width:26px;height:25px;font-size:13px}
+.cSec{font-size:12px;font-weight:900;color:#ff4d6d;margin:10px 0 0;border-top:1px dashed #dee2e6;padding-top:6px}
+.pick{float:right;display:inline-flex;align-items:center;gap:3px;cursor:pointer;color:#4c6ef5;font-size:10px}
+.pick input{width:22px;height:18px;border:none;padding:0;background:none;cursor:pointer}
+.sl{width:100%;accent-color:#ff4d6d;padding:0;border:none;height:18px}
+.numIn{width:70px!important;padding:4px 6px!important;font-size:13px!important;border-width:2px!important}
+.swa{font-size:15px;min-width:30px;height:28px;padding:0 4px}
+.swa small{font-size:10px;font-weight:800;margin-left:2px;color:#495057}
 .lobbyPanel{pointer-events:auto;width:min(250px,70vw);background:rgba(255,255,255,.9);border-radius:16px;padding:8px 10px;box-shadow:0 8px 24px rgba(30,30,110,.3);font-size:13px;color:#333}
 .lpHead{display:flex;justify-content:space-between;align-items:center;font-weight:900;color:#ff4d6d}
 .lpRow{display:flex;gap:6px;align-items:center;margin-top:6px}
@@ -145,13 +162,6 @@ input:focus,select:focus{border-color:#748ffc}
     <div id="lpBody">
       <div id="codeWrap" class="lpRow"><span class="lpLbl">방 번호</span><b id="codeShow" class="lpCode">-----</b><button class="mini b-blue" id="btnCopy" title="초대 링크 복사">링크</button></div>
       <ul id="plist"></ul>
-      <button class="mini b-pink" id="btnCustom" style="width:100%;margin-top:6px;padding:7px">🎨 내 캥거루 꾸미기</button>
-      <div id="cBody" class="hidden">
-        <div class="cLbl">헬멧·유니폼 색</div><div class="sw" id="swCol"></div>
-        <div class="cLbl">털 색</div><div class="sw" id="swFur"></div>
-        <div class="cLbl">액세서리</div><div class="sw" id="swAcc"></div>
-        <button class="mini b-blue" id="btnFace" style="width:100%;margin-top:6px">👀 내 얼굴 보기 (카메라 돌리기)</button>
-      </div>
       <div id="maxRow" class="lpRow"><span class="lpLbl">최대 인원</span><select id="maxSel"><option>2</option><option>4</option><option>6</option><option selected>8</option><option>10</option><option>12</option><option>16</option></select><span class="lpLbl" id="maxInfo"></span></div>
       <div id="hostOpts" class="lpRow">
         <select id="botSel" title="빈 자리를 봇으로 채우기"><option value="0">봇 없음</option><option value="8">봇 8명까지</option><option value="12" selected>봇 12명까지</option><option value="16">봇 16명까지</option></select>
@@ -161,6 +171,32 @@ input:focus,select:focus{border-color:#748ffc}
       <div id="hostMsg" class="lpNote">방 목록에 공개됐어요! 친구들이 들어오면 시작을 눌러주세요<br>📱 방장은 이 화면을 켜 두세요</div>
       <div id="waitMsg" class="lpNote">⏳ 방장이 시작하길 기다리는 중…</div>
       <div class="lpRow" style="justify-content:space-between"><button class="mini b-gray" id="btnLeave">나가기</button><span class="err" id="lobbyErr" style="margin:0;font-size:12px"></span></div>
+    </div>
+  </div>
+</div>
+
+<div id="custom" class="hidden">
+  <div class="lobbyPanel cPanel">
+    <div class="lpHead"><span>🎨 내 캥거루 꾸미기</span><button class="mini b-gray" id="btnCFold" title="접기/펼치기">－</button></div>
+    <div id="cBody">
+      <div class="lpRow"><button class="mini b-blue" id="btnRand" style="flex:1">🎲 랜덤</button><button class="mini b-gray" id="btnReset">↺ 초기화</button><button class="mini b-pink" id="btnFace">👀 앞모습</button></div>
+      <div class="cSec">🎨 색깔</div>
+      <div class="cLbl">헬멧·유니폼 <label class="pick"><input type="color" id="pkCol"><span>RGB 직접 선택</span></label></div><div class="sw" id="swCol"></div>
+      <div class="cLbl">털 <label class="pick"><input type="color" id="pkFur"><span>RGB 직접 선택</span></label></div><div class="sw" id="swFur"></div>
+      <div class="cLbl">배·주둥이 <label class="pick"><input type="color" id="pkBelly"><span>RGB 직접 선택</span></label></div><div class="sw" id="swBelly"></div>
+      <div class="cSec">😊 얼굴</div>
+      <div class="cLbl">눈</div><div class="sw" id="swEyes"></div>
+      <div class="cLbl">입</div><div class="sw" id="swMouth"></div>
+      <div class="cSec">🦘 몸</div>
+      <div class="cLbl">체형</div><div class="sw" id="swShape"></div>
+      <div class="cLbl">크기 <b id="vSize"></b></div><input type="range" class="sl" id="slSize" min="80" max="125">
+      <div class="cLbl">귀 길이 <b id="vEar"></b></div><input type="range" class="sl" id="slEar" min="60" max="150">
+      <div class="cLbl">꼬리 길이 <b id="vTail"></b></div><input type="range" class="sl" id="slTail" min="60" max="150">
+      <div class="cSec">✨ 꾸밈</div>
+      <div class="cLbl">액세서리</div><div class="sw" id="swAcc"></div>
+      <div class="cLbl">달릴 때 남는 흔적</div><div class="sw" id="swTrail"></div>
+      <div class="cLbl">등번호 (0~99)</div><div class="lpRow" style="margin-top:0"><input type="number" id="inNum" min="0" max="99" placeholder="없음" class="numIn"><button class="mini b-gray" id="btnNumClr">지우기</button></div>
+      <div class="lpNote" style="color:#868e96">크기·체형은 겉모습만 바뀌고 판정 크기는 모두 같아요</div>
     </div>
   </div>
 </div>
@@ -268,36 +304,61 @@ const G={arc:new THREE.TorusGeometry(1,.12,8,24,Math.PI),oct:new THREE.Octahedro
 /* ================= RHINO MODEL ================= */
 function part(geo,m,sx,sy,sz,x,y,z,parent){const o=new THREE.Mesh(geo,m);o.scale.set(sx,sy,sz);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o;}
 const FURS=[0xc8834a,0x8d5a3b,0xe8c9a0,0x9e9e9e,0xf4b6c2,0xf5f5f5,0x6d4c41,0xffb74d];
-const ACCS=[['none','✖','없음'],['glasses','😎','선글라스'],['crown','👑','왕관'],['bow','🎀','리본'],['flower','🌸','꽃'],['phones','🎧','헤드폰']];
-const lookKey=(info)=>info.color+'|'+((info.look&&info.look.fur)||0)+'|'+((info.look&&info.look.acc)||'none');
+const BELLYS=[0xf3d9b1,0xffffff,0xffe3e3,0xfff3bf,0xd3f9d8,0xd0ebff];
+const ACCS=[['none','✖','없음'],['glasses','😎','선글라스'],['crown','👑','왕관'],['bow','🎀','리본'],['flower','🌸','꽃'],['phones','🎧','헤드폰'],['party','🥳','고깔모자'],['halo','😇','천사링'],['mustache','🥸','콧수염']];
+const EYES=[['round','●','동글'],['big','✨','반짝'],['sleepy','😪','졸린'],['angry','😠','화난'],['wink','😉','윙크']];
+const MOUTHS=[['none','➖','없음'],['smile','🙂','미소'],['tongue','😛','메롱'],['teeth','🐰','앞니']];
+const SHAPES=[['normal','🦘','보통'],['chubby','🍙','통통'],['slim','🥢','날씬'],['buff','💪','근육']];
+const TRAILS=[['none','✖','없음'],['sparkle','✨','반짝이'],['heart','💗','하트'],['rainbow','🌈','무지개'],['cloud','☁️','구름'],['fire','🔥','불꽃']];
+const lookKey=info=>info.color+'|'+JSON.stringify(info.look||{});
+const numTex=new Map();
+function numberTexture(n,color){ const k=n+'|'+color; if(numTex.has(k))return numTex.get(k);
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  x.fillStyle='#fff'; x.beginPath(); x.arc(64,64,60,0,Math.PI*2); x.fill(); x.lineWidth=8; x.strokeStyle=hex(color); x.stroke();
+  x.fillStyle=hex(color); x.font='900 70px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(String(n),64,70);
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; const m=new THREE.MeshStandardMaterial({map:t,transparent:true}); numTex.set(k,m); return m; }
+const PLANE=new THREE.PlaneGeometry(1,1);
 function makeKangaroo(color,look){
+  const L=cleanLook(look);
   const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
-  const fur=mat((look&&look.fur)||0xc8834a), light=mat(0xf3d9b1), col=mat(color), dark=mat(0x2b1d14), white=mat(0xffffff), pink=mat(0xf4a6a6);
-  part(G.sph,fur,.48,.72,.5,0,1.05,0,body).rotation.x=.25;            // torso
-  part(G.sph,col,.52,.42,.54,0,1.17,-.03,body).rotation.x=.25;        // jersey
-  part(G.sph,light,.33,.44,.2,0,.92,.3,body);                          // belly
-  part(G.sph,light,.31,.19,.17,0,.72,.37,body);                        // pouch
-  part(G.box,dark,.34,.03,.03,0,.83,.47,body);                         // pouch opening
-  part(G.sph,white,.15,.15,.04,0,1.27,-.5,body);                       // jersey badge
+  const fur=mat(L.fur), light=mat(L.belly), col=mat(color), dark=mat(0x2b1d14), white=mat(0xffffff), pink=mat(0xf4a6a6);
+  const SH={normal:[1,1,1,1],chubby:[1.28,1,1.25,1.15],slim:[.8,1.06,.84,.8],buff:[1.15,1.06,1.06,1.75]}[L.shape];
+  part(G.sph,fur,.48*SH[0],.72*SH[1],.5*SH[2],0,1.05,0,body).rotation.x=.25;            // torso
+  part(G.sph,col,.52*SH[0],.42*SH[1],.54*SH[2],0,1.17,-.03,body).rotation.x=.25;        // jersey
+  part(G.sph,light,.33*SH[0],.44,.2*SH[2],0,.92,.3*SH[2],body);                          // belly
+  part(G.sph,light,.31*SH[0],.19,.17,0,.72,.37*SH[2],body);                              // pouch
+  part(G.box,dark,.34*SH[0],.03,.03,0,.83,.47*SH[2],body);                               // pouch opening
+  if(L.num!=null){ const pl=new THREE.Mesh(PLANE,numberTexture(L.num,color)); pl.scale.setScalar(.34); pl.position.set(0,1.24,-.56*SH[2]); pl.rotation.y=Math.PI; pl.rotation.x=.2; body.add(pl); }
+  else part(G.sph,white,.15,.15,.04,0,1.27,-.5*SH[2],body);
   const head=new THREE.Group(); head.position.set(0,1.8,.26); body.add(head);
   part(G.sph,fur,.3,.3,.32,0,0,0,head);
-  part(G.sph,light,.19,.16,.25,0,-.08,.27,head);                       // snout
-  part(G.sph,dark,.075,.055,.05,0,-.02,.51,head);                      // nose
-  for(const s of[-1,1]){ part(G.sph,dark,.05,.06,.04,s*.14,.03,.26,head); part(G.sph,white,.02,.02,.015,s*.14+.015,.05,.29,head);
+  part(G.sph,light,.19,.16,.25,0,-.08,.27,head);                                         // snout
+  part(G.sph,dark,.075,.055,.05,0,-.02,.51,head);                                        // nose
+  const roundEye=s=>{ part(G.sph,dark,.05,.06,.04,s*.14,.03,.26,head); part(G.sph,white,.02,.02,.015,s*.14+.015,.05,.29,head); };
+  const lineEye=s=>{ const l=part(G.box,dark,.09,.018,.02,s*.14,.03,.29,head); l.rotation.z=s*.12; };
+  for(const s of[-1,1]){
+    if(L.eyes==='big'){ part(G.sph,dark,.075,.09,.05,s*.14,.03,.25,head); part(G.sph,white,.03,.03,.02,s*.14+.022,.07,.29,head); part(G.sph,white,.014,.014,.01,s*.14-.02,0,.3,head); }
+    else if(L.eyes==='sleepy') lineEye(s);
+    else if(L.eyes==='wink'){ if(s<0) roundEye(s); else lineEye(s); }
+    else { roundEye(s); if(L.eyes==='angry'){ const br=part(G.box,dark,.11,.024,.02,s*.14,.12,.28,head); br.rotation.z=s*.42; } }
     const ear=new THREE.Group(); ear.position.set(s*.13,.2,-.06); ear.rotation.z=-s*.28; ear.rotation.x=-.15; head.add(ear);
-    part(G.sph,fur,.09,.32,.055,0,.27,0,ear); part(G.sph,pink,.05,.23,.03,0,.26,.03,ear); }
-  part(G.hemi,col,.33,.27,.35,0,.11,-.02,head);                           // helmet
-  part(G.hemi,white,.08,.28,.36,0,.11,-.02,head);                          // helmet stripe
+    part(G.sph,fur,.09,.32*L.ear,.055,0,.27*L.ear,0,ear); part(G.sph,pink,.05,.23*L.ear,.03,0,.26*L.ear,.03,ear);
+  }
+  if(L.mouth==='smile'){ const m=part(G.arc,dark,.06,.06,.06,0,-.15,.47,head); m.rotation.z=Math.PI; }
+  else if(L.mouth==='tongue'){ part(G.sph,mat(0xff6b81),.05,.025,.065,0,-.2,.46,head); }
+  else if(L.mouth==='teeth'){ for(const s of[-1,1]) part(G.box,white,.032,.045,.015,s*.019,-.19,.47,head); }
+  part(G.hemi,col,.33,.27,.35,0,.11,-.02,head);                                          // helmet
+  part(G.hemi,white,.08,.28,.36,0,.11,-.02,head);                                        // helmet stripe
   const arms=[], legs=[];
   for(const s of[-1,1]){
-    const arm=new THREE.Group(); arm.position.set(s*.3,1.38,.3); arm.rotation.x=-.6; body.add(arm);
-    part(G.cyl,fur,.075,.42,.075,0,-.2,0,arm); part(G.sph,dark,.085,.075,.085,0,-.43,0,arm); arms.push(arm);
-    const leg=new THREE.Group(); leg.position.set(s*.27,.62,-.05); body.add(leg);
-    part(G.sph,fur,.24,.38,.32,0,-.06,.02,leg); part(G.cyl,fur,.09,.4,.09,0,-.38,-.08,leg);
+    const arm=new THREE.Group(); arm.position.set(s*.3*SH[0],1.38,.3); arm.rotation.x=-.6; body.add(arm);
+    part(G.cyl,fur,.075*SH[3],.42,.075*SH[3],0,-.2,0,arm); part(G.sph,dark,.085*SH[3],.075,.085*SH[3],0,-.43,0,arm); arms.push(arm);
+    const leg=new THREE.Group(); leg.position.set(s*.27*SH[0],.62,-.05); body.add(leg);
+    part(G.sph,fur,.24*SH[3]**.5,.38,.32,0,-.06,.02,leg); part(G.cyl,fur,.09,.4,.09,0,-.38,-.08,leg);
     part(G.box,fur,.18,.1,.64,0,-.57,.17,leg); part(G.box,dark,.19,.04,.12,0,-.6,.47,leg); legs.push(leg);
   }
-  const tail=part(G.cone,fur,.13,1.05,.13,0,.5,-.65,body); tail.rotation.x=-2.0;
-  const acc=look&&look.acc, gold=mat(0xffc800,{metalness:.6,roughness:.3,emissive:0x553300,emissiveIntensity:.4});
+  const tl=1.05*L.tail, tail=part(G.cone,fur,.13,tl,.13,0,.71-.42*tl/2,-.2-.91*tl/2,body); tail.rotation.x=-2.0;
+  const acc=L.acc, gold=mat(0xffc800,{metalness:.6,roughness:.3,emissive:0x553300,emissiveIntensity:.4});
   if(acc==='glasses'){ for(const s of[-1,1]){ const l=part(G.cyl,mat(0x111111),.1,.03,.09,s*.14,.04,.31,head); l.rotation.x=Math.PI/2; }
     part(G.box,mat(0x111111),.12,.025,.02,0,.06,.32,head); }
   else if(acc==='crown'){ part(G.cyl,gold,.17,.12,.17,0,.43,-.02,head); for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; part(G.cone,gold,.05,.13,.05,Math.cos(a)*.15,.54,Math.sin(a)*.15-.02,head); }
@@ -306,7 +367,12 @@ function makeKangaroo(color,look){
   else if(acc==='flower'){ const fx=-.2,fy=.33,fz=.12; for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; part(G.sph,mat(0xfff0f6),.06,.06,.03,fx+Math.cos(a)*.07,fy+Math.sin(a)*.07,fz,head); } part(G.sph,mat(0xffd43b),.045,.045,.04,fx,fy,fz+.01,head); }
   else if(acc==='phones'){ part(G.arc,mat(0x343a40),.33,.33,.33,0,.06,-.02,head);
     for(const s of[-1,1]){ const c=part(G.cyl,mat(0xff4d6d),.1,.08,.1,s*.31,.05,-.02,head); c.rotation.z=Math.PI/2; } }
-  return {root,body,head,legs,arms,tail};
+  else if(acc==='party'){ const h=part(G.cone,mat(0x845ef7),.15,.34,.15,.05,.55,-.02,head); h.rotation.z=-.25; part(G.sph,white,.06,.06,.06,.1,.73,-.02,head);
+    for(let i=0;i<3;i++){ const b=part(G.cyl,mat(0xffd43b),.155-.045*i,.025,.155-.045*i,.05+i*.025,.44+i*.09,-.02,head); b.rotation.z=-.25; } }
+  else if(acc==='halo'){ const h=part(G.torus,gold,.2,.2,.2,0,.68,-.02,head); h.rotation.x=Math.PI/2; }
+  else if(acc==='mustache'){ for(const s of[-1,1]){ const m=part(G.sph,mat(0x3b2a20),.075,.026,.03,s*.06,-.1,.49,head); m.rotation.z=s*.35; } }
+  root.scale.setScalar(L.size);
+  return {root,body,head,legs,arms,tail,size:L.size,trail:L.trail};
 }
 function nameSprite(text,color){
   const c=document.createElement('canvas');c.width=380;c.height=72;const x=c.getContext('2d');
@@ -487,7 +553,7 @@ function syncLobbyRacers(){
     if(old){ scene.remove(old.rh.root); racers.delete(id); }
     const r=createRacer(id,info,id===S.myId); const sp=old?old.pos.clone():lobbySpawn(); r.pos.copy(sp); r.tp.copy(sp); r.prev.copy(sp);
     if(old){ r.buf=old.buf; r.yaw=old.yaw; if(old.body){ r.body=old.body; } } else if(r.body) r.body.p.copy(sp); }
-  if(S.mode==='lobby') renderCustom();
+  if(S.mode==='lobby') updateCustomSel();
 }
 function updateLobby(now,dt){
   const T=(now+NET.off)/1000, me=racers.get(S.myId), inp=localInput();
@@ -738,7 +804,7 @@ function beginRound(m){
     if(S.isHost&&info.bot){ r.bot={wi:0,tx:0,skill:.86+Math.random()*.13,st:0,lastZ:-99}; pickLane(r); }
   });
   S.roundAt=m.at!=null?m.at:hostNow()-m.el*1000;
-  for(const id of ['menu','lobby','results','win','lobbyTip']) $(id).classList.add('hidden');
+  for(const id of ['menu','lobby','results','win','lobbyTip','custom']) $(id).classList.add('hidden');
   $('hud').classList.remove('hidden'); if(isTouch)$('touch').classList.remove('hidden');
   $('hRound').textContent=`라운드 ${m.r}/3 · ${ROUND_NAMES[m.r]}`;
   setupProgress(); updateQual(); itemKey=null; updateItemHud(null); updateFx(null); $('itemBox').classList.remove('hidden'); camInit=false; camYaw=0;
@@ -807,7 +873,7 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BUILD='2026-11-11i', PROTO=8;
+const BUILD='2026-11-11j', PROTO=8;
 // Several public relays: every device connects to all it can reach and sends on all of them,
 // so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
 const BROKERS=[
@@ -836,7 +902,12 @@ function parseMsg(txt){ let m; try{m=JSON.parse(txt);}catch(e){return null;} if(
 function needNet(){ if(!window.mqtt){ $('menuErr').textContent='멀티플레이 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침 해주세요.'; return false;} return true; }
 function addHuman(id,name,look){ const base=COLORS[[...S.roster.values()].length%COLORS.length];
   S.roster.set(id,{id,name:name||'플레이어',base,color:(look&&look.col!=null)?look.col:base,bot:false,look:cleanLook(look)}); }
-function cleanLook(l){ l=l||{}; return {col:Number.isInteger(l.col)?l.col:null,fur:FURS.includes(l.fur)?l.fur:FURS[0],acc:ACCS.some(a=>a[0]===l.acc)?l.acc:'none'}; }
+function cleanLook(l){ l=l||{}; const c24=v=>Number.isInteger(v)&&v>=0&&v<=0xffffff, inS=(v,A,d)=>A.some(a=>a[0]===v)?v:d, nm_=(v,a,b,d)=>typeof v==='number'&&isFinite(v)?clamp(v,a,b):d;
+  return {col:c24(l.col)?l.col:null,fur:c24(l.fur)?l.fur:FURS[0],belly:c24(l.belly)?l.belly:BELLYS[0],acc:inS(l.acc,ACCS,'none'),eyes:inS(l.eyes,EYES,'round'),mouth:inS(l.mouth,MOUTHS,'none'),
+    shape:inS(l.shape,SHAPES,'normal'),size:nm_(l.size,.8,1.25,1),ear:nm_(l.ear,.6,1.5,1),tail:nm_(l.tail,.6,1.5,1),trail:inS(l.trail,TRAILS,'none'),num:Number.isInteger(l.num)&&l.num>=0&&l.num<=99?l.num:null}; }
+function randomLook(){ const pk=a=>a[Math.floor(Math.random()*a.length)], rc=()=>Math.floor(Math.random()*0x1000000);
+  return cleanLook({col:Math.random()<.75?pk(COLORS):rc(),fur:Math.random()<.7?pk(FURS):rc(),belly:pk(BELLYS),acc:pk(ACCS)[0],eyes:pk(EYES)[0],mouth:pk(MOUTHS)[0],shape:pk(SHAPES)[0],
+    size:Math.round((.85+Math.random()*.35)*100)/100,ear:Math.round((.7+Math.random()*.7)*100)/100,tail:Math.round((.7+Math.random()*.7)*100)/100,trail:Math.random()<.5?pk(TRAILS)[0]:'none',num:Math.random()<.5?Math.floor(Math.random()*100):null}); }
 function setRosterLook(id,look){ const p=S.roster.get(id); if(!p)return; p.look=cleanLook(look); p.color=p.look.col!=null?p.look.col:(p.base||p.color); }
 function updNetStat(){ const n=netUp(), t=`📶 중계 서버 ${n}/${BROKERS.length} 연결 · ${BUILD}`; $('netStat').textContent=t; $('lpNet').textContent=t; }
 setInterval(()=>{ if(NET.clis.length) updNetStat(); },3000);
@@ -1023,7 +1094,7 @@ if(location.protocol.startsWith('http')) fetch(location.pathname+'?nocache='+Dat
 const INVITE=(new URLSearchParams(location.search).get('room')||'').toUpperCase();
 function showLobby(){
   const fresh=S.mode!=='lobby'; S.mode='lobby'; S.inRound=false;
-  $('menu').classList.add('hidden'); $('lobby').classList.remove('hidden'); $('lobbyTip').classList.remove('hidden');
+  $('menu').classList.add('hidden'); $('lobby').classList.remove('hidden'); $('lobbyTip').classList.remove('hidden'); $('custom').classList.remove('hidden');
   $('hud').classList.add('hidden'); if(isTouch){$('touch').classList.remove('hidden');document.body.classList.add('touchOn');}
   if(fresh){ clearRacers(); buildLobbyWorld(); camInit=false; camYaw=0; itemKey=null; updateFx(null); }
   $('itemBox').classList.remove('hidden'); updateItemHud(racers.get(S.myId)?.body||null);
@@ -1038,20 +1109,37 @@ function renderLobby(){
 }
 $('btnHost').onclick=()=>{initAudio();hostGame();};
 let MYLOOK=(()=>{ try{ return cleanLook(JSON.parse(localStorage.getItem('rr_look')||'{}')); }catch(e){ return cleanLook({}); } })();
-function setMyLook(ch){ MYLOOK=cleanLook({...MYLOOK,...ch}); try{localStorage.setItem('rr_look',JSON.stringify(MYLOOK));}catch(e){}
-  setRosterLook(S.myId,MYLOOK); if(S.isHost){ if(!S.solo) bcast(lobbyMsg()); } else toHost({t:'look',look:MYLOOK});
-  syncLobbyRacers(); renderLobby(); }
-function renderCustom(){
-  const me=S.roster.get(S.myId); if(!me)return; const L=me.look||cleanLook({});
-  $('swCol').innerHTML=COLORS.map(c=>`<span class="swc${me.color===c?' sel':''}" data-c="${c}" style="background:${hex(c)}"></span>`).join('');
-  $('swFur').innerHTML=FURS.map(c=>`<span class="swc${L.fur===c?' sel':''}" data-f="${c}" style="background:${hex(c)}"></span>`).join('');
-  $('swAcc').innerHTML=ACCS.map(a=>`<span class="swa${L.acc===a[0]?' sel':''}" data-a="${a[0]}" title="${a[2]}">${a[1]}</span>`).join('');
-  $('swCol').querySelectorAll('[data-c]').forEach(e=>e.onclick=()=>setMyLook({col:+e.dataset.c}));
-  $('swFur').querySelectorAll('[data-f]').forEach(e=>e.onclick=()=>setMyLook({fur:+e.dataset.f}));
-  $('swAcc').querySelectorAll('[data-a]').forEach(e=>e.onclick=()=>setMyLook({acc:e.dataset.a}));
-}
-$('btnCustom').onclick=()=>{ const open=$('cBody').classList.toggle('hidden'); $('btnCustom').textContent=open?'🎨 내 캥거루 꾸미기':'🎨 꾸미기 닫기'; renderCustom(); };
+let lookSendT=0, lookDirty=false;
+function setMyLook(ch,replace){ MYLOOK=cleanLook(replace?ch:{...MYLOOK,...ch}); try{localStorage.setItem('rr_look',JSON.stringify(MYLOOK));}catch(e){}
+  setRosterLook(S.myId,MYLOOK); lookDirty=true; updateCustomSel();
+  clearTimeout(lookSendT); lookSendT=setTimeout(()=>{ if(S.isHost){ if(!S.solo) bcast(lobbyMsg()); } else toHost({t:'look',look:MYLOOK}); },220); }
+setInterval(()=>{ if(lookDirty){ lookDirty=false; syncLobbyRacers(); renderLobby(); } },90);   // rebuild model at most ~11x/s while dragging
+const swHtml=(arr,key)=>arr.map(a=>`<span class="swa" data-k="${key}" data-v="${a[0]}" title="${a[a.length-1]}">${a[1]}${key==='shape'?`<small>${a[2]}</small>`:''}</span>`).join('');
+const swCol=(arr,key)=>arr.map(c=>`<span class="swc" data-k="${key}" data-v="${c}" style="background:${hex(c)}"></span>`).join('');
+$('swCol').innerHTML=swCol(COLORS,'col'); $('swFur').innerHTML=swCol(FURS,'fur'); $('swBelly').innerHTML=swCol(BELLYS,'belly');
+$('swEyes').innerHTML=swHtml(EYES,'eyes'); $('swMouth').innerHTML=swHtml(MOUTHS,'mouth'); $('swShape').innerHTML=swHtml(SHAPES,'shape');
+$('swAcc').innerHTML=swHtml(ACCS,'acc'); $('swTrail').innerHTML=swHtml(TRAILS,'trail');
+document.querySelectorAll('#custom [data-k]').forEach(e=>e.onclick=()=>{ const k=e.dataset.k, v=e.dataset.v; setMyLook({[k]:['col','fur','belly'].includes(k)?+v:v}); });
+const hexToInt=h=>parseInt(h.slice(1),16);
+for(const [id,k] of [['pkCol','col'],['pkFur','fur'],['pkBelly','belly']]) $(id).addEventListener('input',e=>setMyLook({[k]:hexToInt(e.target.value)}));
+for(const [id,k] of [['slSize','size'],['slEar','ear'],['slTail','tail']]) $(id).addEventListener('input',e=>setMyLook({[k]:+e.target.value/100}));
+$('inNum').addEventListener('change',e=>{ const v=parseInt(e.target.value,10); setMyLook({num:Number.isInteger(v)?clamp(v,0,99):null}); });
+$('btnNumClr').onclick=()=>{ $('inNum').value=''; setMyLook({num:null}); };
+$('btnRand').onclick=()=>setMyLook(randomLook(),true);
+$('btnReset').onclick=()=>setMyLook({},true);
 $('btnFace').onclick=()=>{ camYaw+=Math.PI; };
+$('btnCFold').onclick=()=>{ const f=$('cBody').classList.toggle('hidden'); $('btnCFold').textContent=f?'＋':'－'; };
+if(isTouch){ $('cBody').classList.add('hidden'); $('btnCFold').textContent='＋'; }
+function updateCustomSel(){
+  const me=S.roster.get(S.myId); if(!me)return; const L=me.look||cleanLook({}), cur={...L,col:me.color};
+  document.querySelectorAll('#custom [data-k]').forEach(e=>{ const k=e.dataset.k; e.classList.toggle('sel',String(cur[k])===e.dataset.v); });
+  const toHex=v=>'#'+(v>>>0).toString(16).padStart(6,'0');
+  if(document.activeElement!==$('pkCol')) $('pkCol').value=toHex(me.color); if(document.activeElement!==$('pkFur')) $('pkFur').value=toHex(L.fur); if(document.activeElement!==$('pkBelly')) $('pkBelly').value=toHex(L.belly);
+  $('slSize').value=Math.round(L.size*100); $('slEar').value=Math.round(L.ear*100); $('slTail').value=Math.round(L.tail*100);
+  $('vSize').textContent=Math.round(L.size*100)+'%'; $('vEar').textContent=Math.round(L.ear*100)+'%'; $('vTail').textContent=Math.round(L.tail*100)+'%';
+  if(document.activeElement!==$('inNum')) $('inNum').value=L.num==null?'':L.num;
+}
+const renderCustom=updateCustomSel;
 $('maxSel').onchange=()=>{ S.maxP=Math.max(+$('maxSel').value,humanCount()); renderLobby(); if(S.isHost&&!S.solo) bcast(lobbyMsg()); };
 const startSolo=()=>{ initAudio(); stopBrowse(); S.myName=getName(); S.solo=true; S.isHost=true; S.myId='me'; S.roster.clear(); addHuman('me',S.myName); NET.code=''; showLobby(); };
 $('btnCopy').onclick=()=>{ const url=location.href.split('?')[0]+'?room='+NET.code; const txt=location.protocol==='file:'?NET.code:url;
@@ -1061,7 +1149,7 @@ $('btnLeave').onclick=()=>{ location.href=location.pathname; };
 $('btnStart').onclick=()=>{
   if(S.mode!=='lobby')return; initAudio(); const fill=+$('botSel').value; const humans=[...S.roster.values()].filter(p=>!p.bot);
   const names=BOT_NAMES.slice().sort(()=>Math.random()-.5); let k=0;
-  while(S.roster.size<fill){ const id='bot'+k; S.roster.set(id,{id,name:names[k%names.length],color:COLORS[S.roster.size%COLORS.length],bot:true,look:{fur:FURS[Math.floor(Math.random()*FURS.length)],acc:ACCS[Math.floor(Math.random()*ACCS.length)][0]}}); k++; }
+  while(S.roster.size<fill){ const id='bot'+k; const lk=randomLook(); S.roster.set(id,{id,name:names[k%names.length],color:lk.col!=null?lk.col:COLORS[S.roster.size%COLORS.length],bot:true,look:lk}); k++; }
   S.alive=[...S.roster.keys()]; if(!humans.length)return; startRound(1);
 };
 $('btnLobby').onclick=()=>{ backToLobby(); bcast({...lobbyMsg(),back:true}); };
@@ -1152,10 +1240,26 @@ function updateRacerVisuals(dt){
     rh.body.rotation.z=stun?Math.sin(performance.now()/40)*.35:rh.body.rotation.z*.8;
     rh.head.rotation.y=stun?Math.sin(performance.now()/60)*.5:0;
     r.shield.visible=!!(r.flag&4);
-    const sc=(r.flag&32)?.5:1; rh.root.scale.setScalar(rh.root.scale.x+(sc-rh.root.scale.x)*Math.min(1,dt*10));
+    const sc=rh.size*((r.flag&32)?.5:1); rh.root.scale.setScalar(rh.root.scale.x+(sc-rh.root.scale.x)*Math.min(1,dt*10));
+    if(rh.trail!=='none'&&r.spd>2.5&&!(r.flag&32)){ r.trT=(r.trT||0)-dt; if(r.trT<=0){ r.trT=.055; spawnTrail(rh.trail,r.pos,r.yaw); } }
     r.stars.visible=!!(r.flag&64); if(r.stars.visible) r.stars.rotation.y+=dt*6;
   }
 }
+const trails=[], RAINBOW=[0xff6b6b,0xffa94d,0xffd43b,0x69db7c,0x4dabf7,0x748ffc,0xda77f2];
+function spawnTrail(kind,pos,yaw){
+  if(trails.length>420){ const o=trails.shift(); scene.remove(o.m); }
+  let g=G.oct, c=0xffe066, s=.12, vy=.6, e=.6;
+  if(kind==='heart'){ g=G.sph; c=Math.random()<.5?0xff6b9d:0xff8fab; s=.11; vy=1.2; }
+  else if(kind==='rainbow'){ g=G.box; c=RAINBOW[(trails.rainbowI=((trails.rainbowI||0)+1)%7)]; s=.16; vy=0; e=.3; }
+  else if(kind==='cloud'){ g=G.sph; c=0xffffff; s=.22; vy=.4; e=.15; }
+  else if(kind==='fire'){ c=Math.random()<.5?0xff6b00:0xffd43b; s=.14; vy=2.2; e=1; }
+  const m=new THREE.Mesh(g,mat(c,{emissive:c,emissiveIntensity:e})); m.scale.setScalar(s);
+  m.position.set(pos.x-Math.sin(yaw)*.55+(Math.random()-.5)*.4,pos.y-R+.25+Math.random()*.3,pos.z-Math.cos(yaw)*.55+(Math.random()-.5)*.4);
+  scene.add(m); trails.push({m,t:0,life:kind==='rainbow'?.9:.7,s,vy,grow:kind==='cloud'});
+}
+function updateTrails(dt){ for(let i=trails.length-1;i>=0;i--){ const p=trails[i]; p.t+=dt; const k=p.t/p.life;
+  if(k>=1){ scene.remove(p.m); trails.splice(i,1); continue; }
+  p.m.position.y+=p.vy*dt; p.m.rotation.y+=dt*4; p.m.scale.setScalar(p.s*(p.grow?1+k:1-k*.9)); } }
 function camTarget(){
   const me=racers.get(S.myId); if(me)return me;
   const list=S.alive.map(id=>racers.get(id)).filter(Boolean); if(!list.length)return null;
@@ -1222,7 +1326,7 @@ function tick(now,draw){
   const T=S.mode==='game'?(now+NET.off-S.roundAt)/1000:(now+NET.off)/1000;
   if(C)updateCourse(T,dt);
   if(S.mode==='game'&&S.inRound)updateGame(now,T,dt); else if(S.mode==='lobby'&&C&&C.lobby)updateLobby(now,dt);
-  updateRacerVisuals(dt); updateParts(dt); updateRings(dt); updateCamera(dt,now);
+  updateRacerVisuals(dt); updateParts(dt); updateRings(dt); updateTrails(dt); updateCamera(dt,now);
   if(window._islands) for(const g of window._islands){ g.rotation.y+=dt*g.userData.sp*.3; g.position.y=g.userData.y0+Math.sin(now/1000*g.userData.sp)*1.5; }
   if(window._clouds) window._clouds.position.x=Math.sin(now/20000)*10;
   if(draw) renderer.render(scene,camera);
