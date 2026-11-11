@@ -36,7 +36,8 @@ input:focus,select:focus{border-color:#748ffc}
 #lobby #plist{max-height:84px;margin-top:6px}
 #lobby #plist li{display:inline-flex;padding:2px 7px;margin:0 3px 3px 0;font-size:11.5px;border-radius:9px;gap:4px}
 #lobby .dot{width:9px;height:9px;border-width:1px}
-#lobbyTip{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:12;color:#fff;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.35);background:rgba(30,30,80,.45);padding:8px 16px;border-radius:16px;pointer-events:none;font-size:14px;white-space:nowrap}
+#lobbyTip{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:12;color:#fff;font-weight:900;text-shadow:0 2px 0 rgba(0,0,0,.35);background:rgba(30,30,80,.45);padding:8px 16px;border-radius:16px;pointer-events:none;font-size:14px;max-width:92vw;text-align:center}
+.touchOn #lobbyTip{font-size:12px;bottom:8px}
 #roomList{max-height:210px;overflow:auto;background:#f8f9fa;border-radius:14px;padding:6px}
 .room{display:flex;align-items:center;gap:8px;background:#fff;border-radius:11px;padding:8px 10px;margin-bottom:5px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:left}
 .room .rn{flex:1;font-weight:900;font-size:14px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -63,12 +64,16 @@ input:focus,select:focus{border-color:#748ffc}
 #hTimer{top:12px;left:50%;transform:translateX(-50%);font-size:24px;min-width:90px;text-align:center}
 #hQual{top:12px;right:12px;font-size:16px}
 #netWarn{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:26;background:#fff3bf;color:#5c3b00;font-weight:900;font-size:13px;padding:8px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.2);pointer-events:none;max-width:90vw;text-align:center}
-#itemBox{position:fixed;bottom:16px;right:16px;z-index:12;display:flex;align-items:center;gap:10px;background:rgba(30,30,80,.55);backdrop-filter:blur(4px);padding:8px 14px 8px 8px;border-radius:20px;color:#fff;pointer-events:none;max-width:290px}
-#iSlot{width:62px;height:62px;flex:none;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
-#iSlot svg{width:56px;height:56px}
-#iSlot2{width:38px;height:38px;flex:none;border-radius:11px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;align-self:flex-end;margin-left:-4px}
-#iSlot2 svg{width:32px;height:32px}
-#iSlot.has{animation:pop .4s;background:rgba(255,255,255,.3)}
+#itemBox{position:fixed;bottom:16px;right:16px;z-index:12;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.icard{pointer-events:auto;cursor:pointer;display:flex;align-items:center;gap:8px;background:rgba(30,30,80,.6);backdrop-filter:blur(4px);padding:6px 10px 6px 6px;border-radius:16px;color:#fff;width:262px;border:2px solid transparent;transition:transform .1s}
+.icard:active{transform:scale(.97)}
+.icard.empty{opacity:.55;cursor:default}
+.icard.fresh{animation:pop .4s;border-color:#ffd43b}
+.iic{width:50px;height:50px;flex:none;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center}
+.iic svg{width:46px;height:46px}
+.itx{flex:1;min-width:0}.itx b{display:block;font-size:14px}.itx small{display:block;font-size:11px;opacity:.9;font-weight:700}
+.icard kbd{background:#fff;color:#333;border-radius:7px;padding:3px 8px;font-weight:900;font-size:13px;font-family:inherit;flex:none}
+.slotNo{font-size:10px;font-weight:900;opacity:.75}
 #iTxt b{display:block;font-size:16px}#iTxt small{display:block;font-size:12px;opacity:.9;font-weight:700}
 #iTxt kbd{display:inline-block;background:#fff;color:#333;border-radius:5px;padding:0 6px;font-weight:900;font-size:12px;margin-top:3px;font-family:inherit}
 #fxBar{position:fixed;bottom:96px;right:16px;z-index:12;display:flex;gap:6px;pointer-events:none}
@@ -76,7 +81,8 @@ input:focus,select:focus{border-color:#748ffc}
 .fx svg{width:26px;height:26px}
 #pickPop{position:fixed;left:50%;top:58%;transform:translateX(-50%);z-index:13;background:rgba(255,255,255,.95);border-radius:20px;padding:10px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);pointer-events:none;color:#333}
 #pickPop svg{width:58px;height:58px}#pickPop b{font-size:18px;display:block;color:#ff4d6d}#pickPop span{font-size:13px;font-weight:800}
-#tItem svg{width:40px;height:40px}
+#tItem svg,#tItem2 svg{width:40px;height:40px}
+.tb .tn{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;background:rgba(30,30,80,.55);padding:1px 6px;border-radius:8px}
 #hHelp{bottom:12px;left:12px;font-size:12px;font-weight:700;opacity:.85}
 #progress{position:absolute;top:62px;left:50%;transform:translateX(-50%);width:min(520px,70vw);height:10px;background:rgba(255,255,255,.45);border-radius:6px}
 #progress .pd{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #fff;transition:left .2s linear}
@@ -107,7 +113,8 @@ input:focus,select:focus{border-color:#748ffc}
 #tJump{width:84px;height:84px;right:24px;bottom:120px}
 #tDive{width:66px;height:66px;right:120px;bottom:70px}
 #tItem{width:62px;height:62px;right:26px;bottom:222px}
-.touchOn #itemBox{bottom:auto;top:110px}.touchOn #fxBar{bottom:auto;top:190px}
+#tItem2{width:62px;height:62px;right:26px;bottom:312px}
+.touchOn #itemBox{display:none}.touchOn #fxBar{bottom:auto;top:110px}
 </style>
 <script src="https://unpkg.com/mqtt@5/dist/mqtt.min.js"></script>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
@@ -127,7 +134,7 @@ input:focus,select:focus{border-color:#748ffc}
     <div id="roomList"><div class="roomEmpty">방 목록을 불러오는 중…</div></div>
     <div class="err" id="menuErr"></div>
     <div class="help" id="netStat" style="margin-top:4px;font-size:11px"></div>
-    <div class="help">WASD/방향키 이동 · Space 점프 · Shift 다이브 · E 아이템 · 마우스 드래그로 시점 회전<br>3라운드를 통과하고 정상의 황금 문을 가장 먼저 터뜨리세요!</div>
+    <div class="help">WASD/방향키 이동 · Space 점프 · Shift 다이브 · E/Q 아이템 1·2번 · 마우스 드래그로 시점 회전<br>3라운드를 통과하고 정상의 황금 문을 가장 먼저 터뜨리세요!</div>
   </div>
 </div>
 
@@ -189,12 +196,12 @@ input:focus,select:focus{border-color:#748ffc}
   <div id="progress"><span class="flag">🏁</span></div>
   <div id="center"></div>
   <div id="toasts"></div>
-  <div class="pill" id="hHelp">WASD 이동 · Space 점프 · Shift 다이브 · E 아이템 · 드래그 시점</div>
+  <div class="pill" id="hHelp">WASD 이동 · Space 점프 · Shift 다이브 · E/Q 아이템 · 드래그 시점</div>
   <div id="specBtn" class="hidden"><button class="btn b-blue" id="btnSpec">👀 다른 선수 관전</button></div>
 </div>
 
 <div id="netWarn" class="hidden">📡 방장과 연결이 잠시 끊겼어요 — 다시 연결되길 기다리는 중…</div>
-<div id="itemBox" class="hidden"><div id="iSlot"></div><div id="iSlot2"></div><div id="iTxt"></div></div>
+<div id="itemBox" class="hidden"><div class="icard empty" id="ic2"></div><div class="icard empty" id="ic1"></div></div>
 <div id="fxBar"></div>
 <div id="pickPop" class="hidden"></div>
 
@@ -202,7 +209,8 @@ input:focus,select:focus{border-color:#748ffc}
   <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
   <div class="tb" id="tJump">점프</div>
   <div class="tb" id="tDive">다이브</div>
-  <div class="tb" id="tItem">아이템</div>
+  <div class="tb" id="tItem2">아이템2</div>
+  <div class="tb" id="tItem">아이템1</div>
 </div>
 
 <script type="module">
@@ -512,7 +520,7 @@ function updateCourse(T,dt){
 }
 
 /* ================= PHYSICS ================= */
-function makeBody(){return {p:new V3(),v:new V3(),yaw:0,grounded:false,ground:null,stun:0,diving:false,diveT:0,getup:0,coyote:0,jumpBuf:0,items:[],boost:0,sjump:0,shield:0,hitCD:0,cpi:0,carry:0,carryBy:null,dizzy:0};}
+function makeBody(){return {p:new V3(),v:new V3(),yaw:0,grounded:false,ground:null,stun:0,diving:false,diveT:0,getup:0,coyote:0,jumpBuf:0,items:[null,null],boost:0,sjump:0,shield:0,hitCD:0,cpi:0,carry:0,carryBy:null,dizzy:0};}
 function hit(b,kx,ky,kz,isMe){
   if(b.hitCD>0)return; b.hitCD=.7;
   if(b.shield>0){ b.shield=0; b.v.x*=.3; b.v.z*=.3; if(isMe){sfx('shield');toast('🛡️ 실드가 막아줬어요!');} return; }
@@ -583,7 +591,8 @@ function stepBody(b,inp,dt,T,isMe){
     else if(inp.dive){ b.diving=true; b.diveT=0; const s=Math.max(13.5,Math.hypot(b.v.x,b.v.z)+3.5);
       b.v.x=Math.sin(b.yaw)*s; b.v.z=Math.cos(b.yaw)*s; b.v.y=b.grounded?5.5:Math.max(b.v.y+2,3.5); b.grounded=false; b.ground=null; if(isMe)sfx('dive'); }
   } else if(b.grounded){ const f=(b.diving?16:13)*dt; b.v.x=approach(b.v.x,0,f); b.v.z=approach(b.v.z,0,f); }
-  if(inp.item&&b.items.length){ useItem(b,isMe); }
+  if(inp.item&&b.items[0]) useItem(b,isMe,0);
+  if(inp.item2&&b.items[1]) useItem(b,isMe,1);
   b.v.y=Math.max(b.v.y-GRAV*dt,-45);
   if(b.grounded&&b.ground&&b.ground.delta) b.p.add(b.ground.delta);
   const wasG=b.grounded; b.grounded=false; b.ground=null;
@@ -594,8 +603,8 @@ function stepBody(b,inp,dt,T,isMe){
   hazards(b,T,isMe);
   if(b.grounded) for(let i=b.cpi+1;i<C.cps.length;i++){ const c=C.cps[i]; if(b.p.z>=c.z&&b.p.y>=c.y-.5) b.cpi=i; }
   if(b.p.y<-28){ respawn(b); if(isMe){ sfx('fall'); toast('☁️ 추락! 체크포인트에서 다시 시작'); } }
-  for(const pu of C.powerups){ if(pu.cd>0||b.items.length>=2)continue;
-    if(Math.hypot(b.p.x-pu.x,b.p.y-pu.y,b.p.z-pu.z)<1.8){ pu.cd=3.5; const it=ITEM_TYPES[Math.floor(Math.random()*ITEM_TYPES.length)]; b.items.push(it); if(isMe){sfx('pick');updateItemHud(b);showPickup(it);} } }
+  for(const pu of C.powerups){ if(pu.cd>0||(b.items[0]&&b.items[1]))continue;
+    if(Math.hypot(b.p.x-pu.x,b.p.y-pu.y,b.p.z-pu.z)<1.8){ pu.cd=3.5; const it=ITEM_TYPES[Math.floor(Math.random()*ITEM_TYPES.length)], sl=b.items[0]?1:0; b.items[sl]=it; if(isMe){sfx('pick');updateItemHud(b);showPickup(it,sl);} } }
 }
 const ICON={
  boost:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#ff922b" stroke="#fff" stroke-width="4"/><path d="M37 8 16 36h13l-5 20 23-30H34z" fill="#ffe066" stroke="#7a3b00" stroke-width="2.5" stroke-linejoin="round"/></svg>',
@@ -631,14 +640,14 @@ function applyFx(m){
   else if(m.k==='pouch'){ if(tgt&&tgt.body){ const b=tgt.body, isMe=tgt.id===S.myId; if(b.carry>0)return;
       if(!blockedByShield(b,isMe)){ b.carry=m.dur; b.carryBy=m.from; b.dizzy=0; if(isMe){ sfx('pick'); toast(`👜 ${nm(m.from)}의 주머니에 쏙! (4초)`); } } } }
 }
-function useItem(b,isMe){
-  const it=b.items[0]; if(!it)return false;
+function useItem(b,isMe,slot=0){
+  const it=b.items[slot]; if(!it)return false;
   if(b.carry>0||b.dizzy>0) return false;
   if(it==='pouch'||it==='smash'){ const t=nearestTarget(b,it==='pouch'?POUCH_R:SMASH_R);
     if(!t){ if(isMe){ toast(`😅 근처에 캥거루가 없어요 (${it==='pouch'?'가까이':'조금 더 가까이'} 가서 쓰세요)`); sfx('thud'); } return false; }
-    b.items.shift(); emitFx({t:'fx',k:it,from:b.id,target:t.id,dur:4});
+    b.items[slot]=null; emitFx({t:'fx',k:it,from:b.id,target:t.id,dur:4});
     if(isMe){ sfx('use'); toast(it==='pouch'?`👜 ${nm(t.id)}를 주머니에 넣었어요!`:`🔨 ${nm(t.id)} 강타!`); updateItemHud(b); } return true; }
-  b.items.shift();
+  b.items[slot]=null;
   if(it==='kick'){ emitFx({t:'fx',k:'kick',from:b.id,x:+b.p.x.toFixed(2),y:+b.p.y.toFixed(2),z:+b.p.z.toFixed(2),yaw:+b.yaw.toFixed(2)}); }
   else if(it==='boost')b.boost=3.5; else if(it==='jump')b.sjump=1; else if(it==='shield')b.shield=8;
   if(isMe){ sfx('use'); toast(ITEM_NAMES[it]+' 발동!'); updateItemHud(b); }
@@ -668,10 +677,11 @@ function botInput(r,dt,T){
   if(b.grounded&&b.stun<=0){ const fx=b.p.x+inp.mx*(R+1), fz=b.p.z+inp.mz*(R+1); if(!groundBelow(fx,fz,b.p.y-R)) inp.jump=true; }
   bot.st+=dt; if(bot.st>.9){ if(b.p.z-bot.lastZ<.4){ inp.jump=Math.random()<.5; pickLane(r); bot.tx+= (Math.random()-.5)*8; } bot.st=0; bot.lastZ=b.p.z; }
   if(b.grounded&&Math.random()<.0025*bot.skill) inp.dive=true;
-  if(b.items.length){ bot.itemT=(bot.itemT||0)+dt; const it=b.items[0];
-    if(it==='kick'||it==='pouch'||it==='smash'){ const rng=it==='kick'?KICK_R*.8:it==='pouch'?POUCH_R:SMASH_R;
-      if(bot.itemT>.6&&nearestTarget(b,rng)){ inp.item=true; bot.itemT=0; } else if(bot.itemT>12){ b.items.shift(); bot.itemT=0; } }
-    else if(bot.itemT>1.5){ inp.item=true; bot.itemT=0; } }
+  if(b.items[0]||b.items[1]){ bot.itemT=(bot.itemT||0)+dt;
+    for(const sl of [0,1]){ const it=b.items[sl]; if(!it)continue; const key=sl?'item2':'item';
+      if(it==='kick'||it==='pouch'||it==='smash'){ const rng=it==='kick'?KICK_R*.8:it==='pouch'?POUCH_R:SMASH_R;
+        if(bot.itemT>.6&&nearestTarget(b,rng)){ inp[key]=true; bot.itemT=0; break; } else if(bot.itemT>12){ b.items[sl]=null; bot.itemT=0; } }
+      else if(bot.itemT>1.5){ inp[key]=true; bot.itemT=0; break; } } }
   return inp;
 }
 
@@ -797,7 +807,7 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BUILD='2026-11-11h', PROTO=8;
+const BUILD='2026-11-11i', PROTO=8;
 // Several public relays: every device connects to all it can reach and sends on all of them,
 // so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
 const BROKERS=[
@@ -1062,12 +1072,19 @@ function toast(t){ const d=document.createElement('div'); d.className='toast'; d
 function updateQual(){ $('hQual').textContent=S.round===3?'👑 황금 문을 먼저 터뜨려라!':S.myDone||S.places.includes(S.myId)?'✅ 골인 완료!':!S.alive.includes(S.myId)?'👀 관전 중':`🏁 골인하면 통과! (남은 자리 ${Math.max(0,S.quota-S.places.length)})`; }
 let itemKey=null, fxKey=null, pickT=0;
 function updateItemHud(b){
-  const its=b?b.items:[], key=its.join(); if(key===itemKey)return; itemKey=key; const it=its[0]||null, it2=its[1]||null;
-  $('iSlot').innerHTML=ICON[it||'none']; $('iSlot').classList.toggle('has',!!it); $('iSlot2').innerHTML=it2?ICON[it2]:ICON.none;
-  $('iTxt').innerHTML=it?`<b>${ITEMS[it].n}</b><small>${ITEMS[it].d}</small><kbd>${isTouch?'아이템 버튼':'E 키'}</kbd> 로 사용 ${it2?`· 다음: ${ITEMS[it2].n}`:''}`:`<b>아이템 없음</b><small>노란 <b style="display:inline;font-size:12px">?</b> 상자를 먹으면<br>랜덤 아이템 획득! (최대 2개)</small>`;
-  $('tItem').innerHTML=it?ICON[it]:'아이템'; $('tItem').style.opacity=it?1:.4;
+  const its=b?b.items:[null,null], key=its.map(x=>x||'').join(); if(key===itemKey)return;
+  const prev=(itemKey||',').split(','); itemKey=key;
+  [[0,'ic1','tItem','E','아이템1'],[1,'ic2','tItem2','Q','아이템2']].forEach(([sl,cid,tid,k,tl])=>{
+    const it=its[sl], card=$(cid), tb=$(tid);
+    card.classList.toggle('empty',!it);
+    card.innerHTML=it?`<div class="iic">${ICON[it]}</div><div class="itx"><span class="slotNo">${sl+1}번 칸</span><b>${ITEMS[it].n}</b><small>${ITEMS[it].d}</small></div><kbd>${k}</kbd>`
+                     :`<div class="iic">${ICON.none}</div><div class="itx"><span class="slotNo">${sl+1}번 칸</span><b>비어 있음</b><small>? 상자를 먹으면 채워져요</small></div><kbd>${k}</kbd>`;
+    if(it&&prev[sl]!==it){ card.classList.remove('fresh'); void card.offsetWidth; card.classList.add('fresh'); }
+    tb.innerHTML=(it?ICON[it]:tl)+(it?`<span class="tn">${ITEMS[it].n}</span>`:''); tb.style.opacity=it?1:.4;
+  });
 }
-function showPickup(it){ const el=$('pickPop'); el.innerHTML=`${ICON[it]}<div><b>아이템 획득!</b><span>${ITEMS[it].n} — ${isTouch?'아이템 버튼':'E 키'}로 사용</span></div>`; el.classList.remove('hidden'); el.style.animation='none'; void el.offsetWidth; el.style.animation='pop .35s'; clearTimeout(pickT); pickT=setTimeout(()=>el.classList.add('hidden'),2000); }
+function showPickup(it,sl=0){ const el=$('pickPop'); const where=isTouch?(sl?'위쪽 아이템 버튼':'아래쪽 아이템 버튼'):(sl?'Q 키':'E 키');
+  el.innerHTML=`${ICON[it]}<div><b>아이템 획득! (${sl+1}번 칸)</b><span>${ITEMS[it].n} — ${where}로 사용</span></div>`; el.classList.remove('hidden'); el.style.animation='none'; void el.offsetWidth; el.style.animation='pop .35s'; clearTimeout(pickT); pickT=setTimeout(()=>el.classList.add('hidden'),2000); }
 function updateFx(b){
   const fx=b?[['boost',b.boost],['jump',b.sjump],['shield',b.shield]].filter(f=>f[1]>0):[];
   const key=fx.map(f=>f[0]+Math.ceil(f[1])).join(); if(key===fxKey)return; fxKey=key;
@@ -1078,10 +1095,10 @@ function setupProgress(){ const pr=$('progress'); pr.querySelectorAll('.pd').for
   for(const id of S.alive){ const p=S.roster.get(id); if(!p)continue; const d=document.createElement('div'); d.className='pd'+(id===S.myId?' me':''); d.style.background=hex(p.color); pr.appendChild(d); progDots.set(id,d); } }
 
 /* ================= INPUT ================= */
-const keys={}; let pJump=false,pDive=false,pItem=false;
+const keys={}; let pJump=false,pDive=false,pItem=false,pItem2=false;
 addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT')return; if(e.target.tagName==='BUTTON'||e.target.tagName==='SELECT')e.target.blur(); keys[e.code]=true;
   if(e.code==='Space'){pJump=true;e.preventDefault();} if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')pDive=true;
-  if(e.code==='KeyE'||e.code==='KeyJ')pItem=true; if(e.code==='Tab'){S.specIdx++;e.preventDefault();}
+  if(e.code==='KeyE'||e.code==='KeyJ'||e.code==='Digit1')pItem=true; if(e.code==='KeyQ'||e.code==='KeyU'||e.code==='Digit2')pItem2=true; if(e.code==='Tab'){S.specIdx++;e.preventDefault();}
   if(e.code.startsWith('Arrow'))e.preventDefault(); });
 addEventListener('keyup',e=>{keys[e.code]=false; if(e.code==='Space'&&e.target.tagName!=='INPUT')e.preventDefault();});
 document.querySelectorAll('button,select').forEach(b=>{b.addEventListener('click',()=>{ if(b.tagName==='BUTTON')b.blur(); }); b.addEventListener('change',()=>b.blur());});
@@ -1099,12 +1116,15 @@ addEventListener('pointerup',joyEnd); addEventListener('pointercancel',joyEnd);
 $('tJump').addEventListener('pointerdown',e=>{e.stopPropagation();pJump=true;});
 $('tDive').addEventListener('pointerdown',e=>{e.stopPropagation();pDive=true;});
 $('tItem').addEventListener('pointerdown',e=>{e.stopPropagation();pItem=true;});
+$('tItem2').addEventListener('pointerdown',e=>{e.stopPropagation();pItem2=true;});
+$('ic1').addEventListener('pointerdown',e=>{e.stopPropagation();pItem=true;});
+$('ic2').addEventListener('pointerdown',e=>{e.stopPropagation();pItem2=true;});
 function localInput(){
   let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
   let r=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
   const l=Math.hypot(f,r); if(l>1){f/=l;r/=l;}
   const fx=Math.sin(camYaw), fz=Math.cos(camYaw), rx=-Math.cos(camYaw), rz=Math.sin(camYaw);
-  const inp={mx:fx*f+rx*r,mz:fz*f+rz*r,jump:pJump,dive:pDive,item:pItem}; pJump=pDive=pItem=false; return inp;
+  const inp={mx:fx*f+rx*r,mz:fz*f+rz*r,jump:pJump,dive:pDive,item:pItem,item2:pItem2}; pJump=pDive=pItem=pItem2=false; return inp;
 }
 
 /* ================= PARTICLES ================= */
