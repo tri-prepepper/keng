@@ -109,6 +109,7 @@ input:focus,select:focus{border-color:#748ffc}
     <div class="row"><input id="codeIn" maxlength="5" placeholder="방 코드 5자리" style="text-transform:uppercase"><button class="btn b-blue" id="btnJoin">참가</button></div>
     <button class="btn b-green" id="btnSolo">🤖 혼자 연습 (봇과 대결)</button>
     <div class="err" id="menuErr"></div>
+    <div class="help" id="netStat" style="margin-top:4px;font-size:11px"></div>
     <div class="help">WASD/방향키 이동 · Space 점프 · Shift 다이브 · E 아이템 · 마우스 드래그로 시점 회전<br>3라운드를 통과하고 정상의 황금 문을 가장 먼저 터뜨리세요!</div>
   </div>
 </div>
@@ -124,6 +125,7 @@ input:focus,select:focus{border-color:#748ffc}
         <select id="botSel" title="빈 자리를 봇으로 채우기"><option value="0">봇 없음</option><option value="8">봇 8명까지</option><option value="12" selected>봇 12명까지</option><option value="16">봇 16명까지</option></select>
         <button class="mini b-pink" id="btnStart" style="flex:1">🚀 시작</button>
       </div>
+      <div id="lpNet" class="lpNote" style="color:#868e96"></div>
       <div id="hostMsg" class="lpNote">친구들이 다 들어오면 시작을 눌러주세요<br>📱 코드를 보낸 뒤엔 꼭 이 화면으로 돌아와 주세요</div>
       <div id="waitMsg" class="lpNote">⏳ 방장이 시작하길 기다리는 중…</div>
       <div class="lpRow" style="justify-content:space-between"><button class="mini b-gray" id="btnLeave">나가기</button><span class="err" id="lobbyErr" style="margin:0;font-size:12px"></span></div>
@@ -718,35 +720,59 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
-const NET={cli:null,code:'',base:'',conns:new Map(),hostSeen:0,joined:false,off:0,samples:[]};
+const BUILD='2026-11-11c', PROTO=4;
+// Several public relays: every device connects to all it can reach and sends on all of them,
+// so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
+const BROKERS=[
+  {u:'wss://broker.emqx.io:8084/mqtt'},
+  {u:'wss://mqtt.eclipseprojects.io:443/mqtt'},
+  {u:'wss://public.cloud.shiftr.io',o:{username:'public',password:'public'}},
+  {u:'wss://broker.hivemq.com:8884/mqtt'},
+  {u:'wss://test.mosquitto.org:8081/mqtt'}];
+const NET={clis:[],code:'',base:'',conns:new Map(),hostSeen:0,joined:false,off:0,samples:[],seen:new Set(),seq:0};
 const hostNow=()=>performance.now()+NET.off;           // shared clock (host's timeline)
 const INTERP=140;                                         // ms of interpolation delay for remote players
 function onPong(m){ const now=performance.now(), rtt=now-m.c; if(rtt<0||rtt>5000)return;
   NET.samples.push({rtt,off:m.h+rtt/2-now}); if(NET.samples.length>10)NET.samples.shift();
   const best=NET.samples.reduce((a,b)=>b.rtt<a.rtt?b:a); NET.off=NET.samples.length<2?best.off:NET.off+(best.off-NET.off)*.5; NET.rtt=best.rtt; }
-const codeBroker=c=>[...c].reduce((a,ch)=>a+ch.charCodeAt(0),0)%BROKERS.length;
-function brokerUrl(i){ return new URLSearchParams(location.search).get('broker')||BROKERS[i]; }
 function randCode(){ const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<5;i++)s+=a[Math.floor(Math.random()*a.length)]; return s; }
 function randId(){ return 'u'+Math.random().toString(36).slice(2,9); }
-function pub(topic,m){ if(NET.cli&&NET.cli.connected) try{ NET.cli.publish(topic,JSON.stringify(m),{qos:0}); }catch(e){} }
+const netUp=()=>NET.clis.filter(c=>c.connected).length;
+function netEnd(){ for(const c of NET.clis) try{c.end(true);}catch(e){} NET.clis=[]; for(const c of (NET.pending||[])) try{c.end(true);}catch(e){} NET.pending=[]; }
+function rawPub(topic,payload,retain){ for(const c of NET.clis) if(c.connected) try{ c.publish(topic,payload,{qos:0,retain:!!retain}); }catch(e){} }
+function pub(topic,m,retain){ rawPub(topic,JSON.stringify({...m,_i:S.myId+'.'+(++NET.seq)}),retain); }
 function bcast(m){ if(!S.solo&&S.isHost) pub(NET.base+'/a',m); }
 function sendTo(id,m){ pub(NET.base+'/c/'+id,m); }
 function toHost(m){ pub(NET.base+'/h',{...m,f:S.myId}); }
+function parseMsg(txt){ let m; try{m=JSON.parse(txt);}catch(e){return null;} if(!m||typeof m!=='object')return null;
+  if(m._i){ if(NET.seen.has(m._i))return null; NET.seen.add(m._i); if(NET.seen.size>5000) NET.seen=new Set([...NET.seen].slice(-2500)); } return m; }
 function needNet(){ if(!window.mqtt){ $('menuErr').textContent='멀티플레이 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침 해주세요.'; return false;} return true; }
 function addHuman(id,name){ S.roster.set(id,{id,name:name||'플레이어',color:COLORS[[...S.roster.values()].length%COLORS.length],bot:false}); }
-function connectBroker(i,will){
-  return new Promise((res,rej)=>{
-    const cli=mqtt.connect(brokerUrl(i),{clientId:'rr_'+S.myId+'_'+Math.random().toString(36).slice(2,6),clean:true,keepalive:20,reconnectPeriod:2000,connectTimeout:7000,will});
-    const t=setTimeout(()=>{ try{cli.end(true);}catch(e){} rej(new Error('timeout')); },8000);
-    cli.once('connect',()=>{ clearTimeout(t); res(cli); });
+function updNetStat(){ const n=netUp(), t=`📶 중계 서버 ${n}/${BROKERS.length} 연결 · ${BUILD}`; $('netStat').textContent=t; $('lpNet').textContent=t; }
+setInterval(()=>{ if(NET.clis.length) updNetStat(); },3000);
+// connect to every relay; resolves when the first one is up (others keep joining in the background)
+function connectAll(will,topics,onMsg){
+  const q=new URLSearchParams(location.search).get('broker'); const list=q?[{u:q}]:BROKERS;
+  NET.pending=[];
+  return new Promise((res,rej)=>{ let left=list.length, done=false;
+    const failOne=()=>{ if(--left===0&&!done){ done=true; rej(new Error('none')); } };
+    for(const b of list){ let cli, up=false;
+      try{ cli=mqtt.connect(b.u,{...(b.o||{}),clientId:'rr'+S.myId+Math.random().toString(36).slice(2,6),clean:true,keepalive:20,reconnectPeriod:3000,connectTimeout:9000,will}); }
+      catch(e){ failOne(); continue; }
+      NET.pending.push(cli);
+      cli.on('error',()=>{});
+      cli.on('connect',()=>{ if(!up){ up=true; NET.clis.push(cli); cli.subscribe(topics); cli.on('message',(tp,buf)=>onMsg(tp,buf.toString())); }
+        updNetStat(); if(NET.onConnect) NET.onConnect(); if(!done){ done=true; res(); } });
+      cli.on('offline',updNetStat);
+      setTimeout(()=>{ if(!up){ try{cli.end(true);}catch(e){} failOne(); } },10000);
+    }
   });
 }
-function pubInfo(gone){ if(NET.cli&&NET.cli.connected) try{ NET.cli.publish(NET.base+'/info',JSON.stringify({t:'room',ts:Date.now(),gone:!!gone}),{qos:0,retain:true}); }catch(e){} }
+function pubInfo(gone){ rawPub(NET.base+'/info',JSON.stringify({t:'room',ts:Date.now(),gone:!!gone,v:PROTO}),true); }
 // Mobile browsers freeze background tabs. When we come back, don't punish the silence and reconnect fast.
 let lastBeat=performance.now();
 function resumed(){ const now=performance.now(); for(const id of NET.conns.keys()) NET.conns.set(id,now); NET.hostSeen=now; lastBeat=now;
-  if(NET.cli&&!NET.cli.connected) try{ NET.cli.reconnect(); }catch(e){} keepAwake(); }
+  for(const c of NET.clis) if(!c.connected) try{ c.reconnect(); }catch(e){} keepAwake(); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) resumed(); });
 let wakeLock=null;
 async function keepAwake(){ try{ if('wakeLock' in navigator&&!document.hidden&&S.mode!=='menu'&&!S.solo&&(!wakeLock||wakeLock.released)) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} }
@@ -754,53 +780,48 @@ setInterval(()=>{ const now=performance.now(), gap=now-lastBeat; lastBeat=now; i
   if(S.isHost&&!S.solo){ for(const [id,t] of NET.conns) if(now-t>15000) dropPlayer(id); }
   else if(NET.joined&&S.mode!=='menu'){ const q=now-NET.hostSeen; $('netWarn').classList.toggle('hidden',q<4000); if(q>45000) hostLost(); }
 },1000);
-setInterval(()=>{ if(S.isHost&&!S.solo&&NET.cli) pubInfo(false); },8000);
+setInterval(()=>{ if(S.isHost&&!S.solo&&NET.clis.length) pubInfo(false); },8000);
 async function hostGame(){
-  if(!needNet())return; S.myName=getName(); S.myId=randId(); $('menuErr').textContent='방을 만드는 중…';
-  let code=randCode();
-  for(let k=0;k<BROKERS.length;k++){
-    const i=(codeBroker(code)+k)%BROKERS.length; while(codeBroker(code)!==i) code=randCode();
-    const base='rhinorush/v3/'+code;
-    try{ NET.cli=await connectBroker(i,{topic:base+'/info',payload:JSON.stringify({t:'room',ts:Date.now(),gone:true}),qos:0,retain:true}); NET.code=code; NET.base=base; break; }
-    catch(e){ $('menuErr').textContent='서버 연결 재시도 중… ('+(k+2)+'/'+BROKERS.length+')'; }
-  }
-  if(!NET.cli){ $('menuErr').textContent='중계 서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'; return; }
-  NET.cli.subscribe([NET.base+'/h',NET.base+'/s']);
-  NET.cli.on('message',(tp,buf)=>{ let m; try{m=JSON.parse(buf.toString());}catch(e){return;} if(!m.f||m.f===S.myId)return; NET.conns.set(m.f,performance.now()); hostHandle(m.f,m); });
-  NET.cli.on('reconnect',()=>{$('lobbyErr').textContent='연결 재시도 중…';});
-  NET.cli.on('connect',()=>{$('lobbyErr').textContent=''; pubInfo(false); if(S.mode==='lobby') bcast(lobbyMsg()); });
-  addEventListener('beforeunload',()=>{ try{ NET.cli.publish(NET.base+'/info','',{qos:0,retain:true}); NET.cli.publish(NET.base+'/a',JSON.stringify({t:'hostgone'})); }catch(e){} });
+  if(!needNet())return; netEnd(); S.myName=getName(); S.myId=randId(); $('menuErr').textContent='방을 만드는 중… (중계 서버 연결)';
+  const code=randCode(); NET.code=code; NET.base='rhinorush/room/'+code;
+  NET.onConnect=()=>{ $('lobbyErr').textContent=''; pubInfo(false); if(S.mode==='lobby') bcast(lobbyMsg()); };
+  try{ await connectAll({topic:NET.base+'/info',payload:JSON.stringify({t:'room',ts:Date.now(),gone:true,v:PROTO}),qos:0,retain:true},
+      [NET.base+'/h',NET.base+'/s'],
+      (tp,txt)=>{ const m=parseMsg(txt); if(!m||!m.f||m.f===S.myId)return; NET.conns.set(m.f,performance.now()); hostHandle(m.f,m); }); }
+  catch(e){ $('menuErr').textContent='중계 서버에 하나도 연결할 수 없어요. 인터넷 연결(와이파이/데이터)을 확인해주세요.'; return; }
+  addEventListener('beforeunload',()=>{ rawPub(NET.base+'/info','',true); pub(NET.base+'/a',{t:'hostgone'}); });
   S.isHost=true; S.solo=false; S.roster.clear(); addHuman(S.myId,S.myName); $('menuErr').textContent=''; pubInfo(false); showLobby(); keepAwake();
 }
 async function joinGame(code){
   if(!needNet())return; code=code.trim().toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==5){$('menuErr').textContent='방 코드 5자리를 입력하세요';return;}
-  if(NET.cli){ try{NET.cli.end(true);}catch(e){} NET.cli=null; }
-  const myTry=(NET.tryId=(NET.tryId||0)+1);
-  S.myName=getName(); S.myId=randId(); NET.code=code; NET.base='rhinorush/v3/'+code; NET.joined=false; NET.info=null;
-  $('menuErr').textContent='방에 접속하는 중…';
-  try{ NET.cli=await connectBroker(codeBroker(code),{topic:NET.base+'/h',payload:JSON.stringify({t:'bye',f:S.myId}),qos:0,retain:false}); }
-  catch(e){ $('menuErr').textContent='중계 서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'; return; }
+  netEnd(); const myTry=(NET.tryId=(NET.tryId||0)+1);
+  S.myName=getName(); S.myId=randId(); NET.code=code; NET.base='rhinorush/room/'+code; NET.joined=false; NET.info=null;
+  $('menuErr').textContent='방에 접속하는 중… (중계 서버 연결)';
+  NET.onConnect=()=>{ if(NET.joined) toHost({t:'ping',c:performance.now()}); else toHost({t:'hello',name:S.myName,v:PROTO}); };
+  try{ await connectAll({topic:NET.base+'/h',payload:JSON.stringify({t:'bye',f:S.myId}),qos:0,retain:false},
+      [NET.base+'/a',NET.base+'/s',NET.base+'/c/'+S.myId,NET.base+'/info'],
+      (tp,txt)=>{
+        if(tp.endsWith('/info')){ if(!txt){ return; } const m=parseMsg(txt); if(m) NET.info=m; return; }
+        const m=parseMsg(txt); if(!m)return;
+        if(m.f){ if(m.t==='st'&&m.f!==S.myId&&NET.joined) pushSample(m.f,m.ts,m.s); return; }
+        NET.hostSeen=performance.now();
+        if(m.t==='oldver'){ $('menuErr').textContent='방장과 게임 버전이 달라요. 두 기기 모두 새로고침(모바일은 창을 닫았다 다시 열기) 해주세요.'; netEnd(); return; }
+        if(!NET.joined&&(m.t==='lobby'||m.t==='round')){ NET.joined=true; $('menuErr').textContent=''; keepAwake(); }
+        if(NET.joined) clientHandle(m); }); }
+  catch(e){ $('menuErr').textContent='중계 서버에 하나도 연결할 수 없어요. 인터넷 연결(와이파이/데이터)을 확인해주세요.'; return; }
+  if(myTry!==NET.tryId)return;
   S.isHost=false; S.solo=false;
-  NET.cli.on('message',(tp,buf)=>{ const txt=buf.toString();
-    if(tp.endsWith('/info')){ try{ NET.info=txt?JSON.parse(txt):null; }catch(e){} return; }
-    let m; try{m=JSON.parse(txt);}catch(e){return;}
-    if(m.f){ if(m.t==='st'&&m.f!==S.myId&&NET.joined) pushSample(m.f,m.ts,m.s); return; }
-    NET.hostSeen=performance.now();
-    if(!NET.joined&&(m.t==='lobby'||m.t==='round')){ NET.joined=true; $('menuErr').textContent=''; keepAwake(); }
-    if(NET.joined) clientHandle(m); });
-  NET.cli.on('connect',()=>{ if(NET.joined) toHost({t:'ping',c:performance.now()}); });
-  NET.cli.subscribe([NET.base+'/a',NET.base+'/s',NET.base+'/c/'+S.myId,NET.base+'/info'],()=>{
-    let pc=0; const ping=()=>{ if(!NET.cli||myTry!==NET.tryId)return; if(NET.joined){ toHost({t:'ping',c:performance.now()}); pc++; } setTimeout(ping,pc<6?400:2500); }; ping();
-    const t0=performance.now();
-    const hello=()=>{ if(NET.joined||myTry!==NET.tryId||!NET.cli)return; const el=(performance.now()-t0)/1000;
-      const fail=msg=>{ $('menuErr').textContent=msg; try{NET.cli.end(true);}catch(e){} NET.cli=null; };
-      if(el>5&&!NET.info) return fail('방을 찾을 수 없어요. 코드를 다시 확인해주세요.');
-      if(el>120) return fail('방장이 응답하지 않아요. 방장 화면이 켜져 있는지 확인 후 다시 시도해주세요.');
-      if(NET.info&&el>3){ const away=NET.info.gone||Date.now()-NET.info.ts>20000;
-        $('menuErr').textContent=away?`방장 화면이 꺼져 있는 것 같아요 📱 방장이 게임 화면으로 돌아오면 자동으로 들어가요… (${Math.floor(el)}초)`:`방장 응답 기다리는 중… (${Math.floor(el)}초)`; }
-      toHost({t:'hello',name:S.myName}); setTimeout(hello,1500); };
-    hello();
-  });
+  let pc=0; const ping=()=>{ if(myTry!==NET.tryId||!NET.clis.length)return; if(NET.joined){ toHost({t:'ping',c:performance.now()}); pc++; } setTimeout(ping,pc<6?400:2500); }; ping();
+  const t0=performance.now();
+  const hello=()=>{ if(NET.joined||myTry!==NET.tryId||!NET.clis.length)return; const el=(performance.now()-t0)/1000, n=netUp();
+    const fail=msg=>{ $('menuErr').textContent=msg; netEnd(); };
+    if(el>8&&!NET.info) return fail(`방을 찾을 수 없어요. 코드를 다시 확인해주세요. (연결된 중계 서버 ${n}/${BROKERS.length}) — 계속 안 되면 방장과 같은 와이파이로 해보거나, 방장이 방을 다시 만들어 주세요.`);
+    if(el>120) return fail('방장이 응답하지 않아요. 방장 화면이 켜져 있는지 확인 후 다시 시도해주세요.');
+    if(NET.info&&NET.info.v&&NET.info.v!==PROTO) return fail('방장과 게임 버전이 달라요. 두 기기 모두 새로고침(모바일은 창을 닫았다 다시 열기) 해주세요.');
+    if(el>2){ const away=NET.info&&(NET.info.gone||Date.now()-NET.info.ts>20000);
+      $('menuErr').textContent=!NET.info?`방을 찾는 중… (${Math.floor(el)}초, 중계 서버 ${n}/${BROKERS.length})`:away?`방장 화면이 꺼져 있는 것 같아요 📱 방장이 게임 화면으로 돌아오면 자동으로 들어가요… (${Math.floor(el)}초)`:`방장 응답 기다리는 중… (${Math.floor(el)}초)`; }
+    toHost({t:'hello',name:S.myName,v:PROTO}); setTimeout(hello,1500); };
+  hello();
 }
 function hostLost(){ if(S.mode==='menu'||NET.lost)return; NET.lost=true; alert('방장과 연결이 끊어졌어요.'); location.href=location.pathname; }
 function lobbyMsg(){ return {t:'lobby',players:rosterArr(),inGame:S.mode==='game'}; }
@@ -816,6 +837,7 @@ function dropPlayer(id){
 function hostHandle(id,m){
   if(m.t==='ping'){ sendTo(id,{t:'pong',c:m.c,h:performance.now()}); return; }
   if(m.t==='bye'){ dropPlayer(id); return; }
+  if(m.t==='hello'&&m.v!==PROTO){ sendTo(id,{t:'oldver'}); return; }
   if(m.t==='hello'){ if(S.roster.has(id)){ if(S.mode==='lobby')bcast(lobbyMsg()); return; } addHuman(id,m.name); toast(`🙌 ${m.name} 입장`);
     if(S.mode==='lobby'){ bcast(lobbyMsg()); renderLobby(); syncLobbyRacers(); }
     else{ const base=S.roundMsgBase; sendTo(id,{...base,roster:rosterArr(),alive:S.alive,el:(hostNow()-S.roundAt)/1000}); for(const d of (C?C.doors:[])) if(!d.alive) sendTo(id,{t:'door',i:d.id}); }
@@ -866,6 +888,12 @@ function sampleRemote(r){
 /* ================= UI ================= */
 function getName(){ const n=$('nameIn').value.trim()||('코뿔소'+Math.floor(Math.random()*90+10)); try{localStorage.setItem('rr_name',n);}catch(e){} return n; }
 try{ $('nameIn').value=localStorage.getItem('rr_name')||''; }catch(e){}
+$('netStat').textContent='버전 '+BUILD;
+if(location.protocol.startsWith('http')) fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
+  const m=t.match(/const BUILD='([^']+)'/); if(m&&m[1]!==BUILD){
+    let n=0; try{ n=+sessionStorage.getItem('rr_reload')||0; }catch(e){}
+    if(S.mode==='menu'&&n<2){ try{sessionStorage.setItem('rr_reload',n+1);}catch(e){} location.replace(location.pathname+'?v='+m[1]+(location.search.includes('room=')?'&'+location.search.slice(1):'')); }
+    else $('menuErr').textContent='새 버전이 있어요! 새로고침 해주세요.'; } }).catch(()=>{});
 { const q=new URLSearchParams(location.search).get('room'); if(q) $('codeIn').value=q.toUpperCase(); }
 function showLobby(){
   const fresh=S.mode!=='lobby'; S.mode='lobby'; S.inRound=false;
