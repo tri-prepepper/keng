@@ -47,6 +47,7 @@ input:focus,select:focus{border-color:#748ffc}
 #hRound{top:12px;left:12px;font-size:15px}
 #hTimer{top:12px;left:50%;transform:translateX(-50%);font-size:24px;min-width:90px;text-align:center}
 #hQual{top:12px;right:12px;font-size:16px}
+#netWarn{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:26;background:#fff3bf;color:#5c3b00;font-weight:900;font-size:13px;padding:8px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.2);pointer-events:none;max-width:90vw;text-align:center}
 #itemBox{position:fixed;bottom:16px;right:16px;z-index:12;display:flex;align-items:center;gap:10px;background:rgba(30,30,80,.55);backdrop-filter:blur(4px);padding:8px 14px 8px 8px;border-radius:20px;color:#fff;pointer-events:none;max-width:290px}
 #iSlot{width:62px;height:62px;flex:none;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
 #iSlot svg{width:56px;height:56px}
@@ -123,7 +124,7 @@ input:focus,select:focus{border-color:#748ffc}
         <select id="botSel" title="빈 자리를 봇으로 채우기"><option value="0">봇 없음</option><option value="8">봇 8명까지</option><option value="12" selected>봇 12명까지</option><option value="16">봇 16명까지</option></select>
         <button class="mini b-pink" id="btnStart" style="flex:1">🚀 시작</button>
       </div>
-      <div id="hostMsg" class="lpNote">친구들이 다 들어오면 시작을 눌러주세요</div>
+      <div id="hostMsg" class="lpNote">친구들이 다 들어오면 시작을 눌러주세요<br>📱 코드를 보낸 뒤엔 꼭 이 화면으로 돌아와 주세요</div>
       <div id="waitMsg" class="lpNote">⏳ 방장이 시작하길 기다리는 중…</div>
       <div class="lpRow" style="justify-content:space-between"><button class="mini b-gray" id="btnLeave">나가기</button><span class="err" id="lobbyErr" style="margin:0;font-size:12px"></span></div>
     </div>
@@ -165,6 +166,7 @@ input:focus,select:focus{border-color:#748ffc}
   <div id="specBtn" class="hidden"><button class="btn b-blue" id="btnSpec">👀 다른 선수 관전</button></div>
 </div>
 
+<div id="netWarn" class="hidden">📡 방장과 연결이 잠시 끊겼어요 — 다시 연결되길 기다리는 중…</div>
 <div id="itemBox" class="hidden"><div id="iSlot"></div><div id="iTxt"></div></div>
 <div id="fxBar"></div>
 <div id="pickPop" class="hidden"></div>
@@ -740,42 +742,65 @@ function connectBroker(i,will){
     cli.once('connect',()=>{ clearTimeout(t); res(cli); });
   });
 }
+function pubInfo(gone){ if(NET.cli&&NET.cli.connected) try{ NET.cli.publish(NET.base+'/info',JSON.stringify({t:'room',ts:Date.now(),gone:!!gone}),{qos:0,retain:true}); }catch(e){} }
+// Mobile browsers freeze background tabs. When we come back, don't punish the silence and reconnect fast.
+let lastBeat=performance.now();
+function resumed(){ const now=performance.now(); for(const id of NET.conns.keys()) NET.conns.set(id,now); NET.hostSeen=now; lastBeat=now;
+  if(NET.cli&&!NET.cli.connected) try{ NET.cli.reconnect(); }catch(e){} keepAwake(); }
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) resumed(); });
+let wakeLock=null;
+async function keepAwake(){ try{ if('wakeLock' in navigator&&!document.hidden&&S.mode!=='menu'&&!S.solo&&(!wakeLock||wakeLock.released)) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} }
+setInterval(()=>{ const now=performance.now(), gap=now-lastBeat; lastBeat=now; if(gap>5000){ resumed(); return; }
+  if(S.isHost&&!S.solo){ for(const [id,t] of NET.conns) if(now-t>15000) dropPlayer(id); }
+  else if(NET.joined&&S.mode!=='menu'){ const q=now-NET.hostSeen; $('netWarn').classList.toggle('hidden',q<4000); if(q>45000) hostLost(); }
+},1000);
+setInterval(()=>{ if(S.isHost&&!S.solo&&NET.cli) pubInfo(false); },8000);
 async function hostGame(){
   if(!needNet())return; S.myName=getName(); S.myId=randId(); $('menuErr').textContent='방을 만드는 중…';
   let code=randCode();
   for(let k=0;k<BROKERS.length;k++){
     const i=(codeBroker(code)+k)%BROKERS.length; while(codeBroker(code)!==i) code=randCode();
-    const base='rhinorush/v2/'+code;
-    try{ NET.cli=await connectBroker(i,{topic:base+'/a',payload:JSON.stringify({t:'hostgone'}),qos:0,retain:false}); NET.code=code; NET.base=base; break; }
+    const base='rhinorush/v3/'+code;
+    try{ NET.cli=await connectBroker(i,{topic:base+'/info',payload:JSON.stringify({t:'room',ts:Date.now(),gone:true}),qos:0,retain:true}); NET.code=code; NET.base=base; break; }
     catch(e){ $('menuErr').textContent='서버 연결 재시도 중… ('+(k+2)+'/'+BROKERS.length+')'; }
   }
   if(!NET.cli){ $('menuErr').textContent='중계 서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'; return; }
   NET.cli.subscribe([NET.base+'/h',NET.base+'/s']);
   NET.cli.on('message',(tp,buf)=>{ let m; try{m=JSON.parse(buf.toString());}catch(e){return;} if(!m.f||m.f===S.myId)return; NET.conns.set(m.f,performance.now()); hostHandle(m.f,m); });
-  NET.cli.on('reconnect',()=>{$('lobbyErr').textContent='연결 재시도 중…';}); NET.cli.on('connect',()=>{$('lobbyErr').textContent='';});
-  S.isHost=true; S.solo=false; S.roster.clear(); addHuman(S.myId,S.myName); $('menuErr').textContent=''; showLobby();
-  setInterval(()=>{ const now=performance.now(); for(const [id,t] of NET.conns) if(now-t>9000) dropPlayer(id); },2000);
+  NET.cli.on('reconnect',()=>{$('lobbyErr').textContent='연결 재시도 중…';});
+  NET.cli.on('connect',()=>{$('lobbyErr').textContent=''; pubInfo(false); if(S.mode==='lobby') bcast(lobbyMsg()); });
+  addEventListener('beforeunload',()=>{ try{ NET.cli.publish(NET.base+'/info','',{qos:0,retain:true}); NET.cli.publish(NET.base+'/a',JSON.stringify({t:'hostgone'})); }catch(e){} });
+  S.isHost=true; S.solo=false; S.roster.clear(); addHuman(S.myId,S.myName); $('menuErr').textContent=''; pubInfo(false); showLobby(); keepAwake();
 }
 async function joinGame(code){
   if(!needNet())return; code=code.trim().toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==5){$('menuErr').textContent='방 코드 5자리를 입력하세요';return;}
   if(NET.cli){ try{NET.cli.end(true);}catch(e){} NET.cli=null; }
-  S.myName=getName(); S.myId=randId(); NET.code=code; NET.base='rhinorush/v2/'+code; NET.joined=false;
+  const myTry=(NET.tryId=(NET.tryId||0)+1);
+  S.myName=getName(); S.myId=randId(); NET.code=code; NET.base='rhinorush/v3/'+code; NET.joined=false; NET.info=null;
   $('menuErr').textContent='방에 접속하는 중…';
   try{ NET.cli=await connectBroker(codeBroker(code),{topic:NET.base+'/h',payload:JSON.stringify({t:'bye',f:S.myId}),qos:0,retain:false}); }
   catch(e){ $('menuErr').textContent='중계 서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'; return; }
   S.isHost=false; S.solo=false;
-  NET.cli.on('message',(tp,buf)=>{ let m; try{m=JSON.parse(buf.toString());}catch(e){return;}
+  NET.cli.on('message',(tp,buf)=>{ const txt=buf.toString();
+    if(tp.endsWith('/info')){ try{ NET.info=txt?JSON.parse(txt):null; }catch(e){} return; }
+    let m; try{m=JSON.parse(txt);}catch(e){return;}
     if(m.f){ if(m.t==='st'&&m.f!==S.myId&&NET.joined) pushSample(m.f,m.ts,m.s); return; }
     NET.hostSeen=performance.now();
-    if(!NET.joined&&(m.t==='lobby'||m.t==='round')){ NET.joined=true; $('menuErr').textContent=''; }
+    if(!NET.joined&&(m.t==='lobby'||m.t==='round')){ NET.joined=true; $('menuErr').textContent=''; keepAwake(); }
     if(NET.joined) clientHandle(m); });
-  NET.cli.subscribe([NET.base+'/a',NET.base+'/s',NET.base+'/c/'+S.myId],()=>{
-    let pc=0; const ping=()=>{ if(!NET.cli)return; if(NET.joined){ toHost({t:'ping',c:performance.now()}); pc++; } setTimeout(ping,pc<6?400:2500); }; ping();
-    let tries=0; const hello=()=>{ if(NET.joined)return; if(++tries>4){ $('menuErr').textContent='방을 찾을 수 없어요. 코드를 확인하거나 방장이 방을 열어두었는지 확인하세요.'; try{NET.cli.end(true);}catch(e){} NET.cli=null; return; }
+  NET.cli.on('connect',()=>{ if(NET.joined) toHost({t:'ping',c:performance.now()}); });
+  NET.cli.subscribe([NET.base+'/a',NET.base+'/s',NET.base+'/c/'+S.myId,NET.base+'/info'],()=>{
+    let pc=0; const ping=()=>{ if(!NET.cli||myTry!==NET.tryId)return; if(NET.joined){ toHost({t:'ping',c:performance.now()}); pc++; } setTimeout(ping,pc<6?400:2500); }; ping();
+    const t0=performance.now();
+    const hello=()=>{ if(NET.joined||myTry!==NET.tryId||!NET.cli)return; const el=(performance.now()-t0)/1000;
+      const fail=msg=>{ $('menuErr').textContent=msg; try{NET.cli.end(true);}catch(e){} NET.cli=null; };
+      if(el>5&&!NET.info) return fail('방을 찾을 수 없어요. 코드를 다시 확인해주세요.');
+      if(el>120) return fail('방장이 응답하지 않아요. 방장 화면이 켜져 있는지 확인 후 다시 시도해주세요.');
+      if(NET.info&&el>3){ const away=NET.info.gone||Date.now()-NET.info.ts>20000;
+        $('menuErr').textContent=away?`방장 화면이 꺼져 있는 것 같아요 📱 방장이 게임 화면으로 돌아오면 자동으로 들어가요… (${Math.floor(el)}초)`:`방장 응답 기다리는 중… (${Math.floor(el)}초)`; }
       toHost({t:'hello',name:S.myName}); setTimeout(hello,1500); };
     hello();
   });
-  setInterval(()=>{ if(NET.joined&&S.mode!=='menu'&&performance.now()-NET.hostSeen>10000) hostLost(); },2000);
 }
 function hostLost(){ if(S.mode==='menu'||NET.lost)return; NET.lost=true; alert('방장과 연결이 끊어졌어요.'); location.href=location.pathname; }
 function lobbyMsg(){ return {t:'lobby',players:rosterArr(),inGame:S.mode==='game'}; }
@@ -807,7 +832,7 @@ function clientHandle(m){
   else if(m.t==='door'){ breakDoor(m.i,false); }
   else if(m.t==='res'){ onRes(m); }
   else if(m.t==='win'){ onWin(m); }
-  else if(m.t==='hostgone'){ hostLost(); }
+  else if(m.t==='hostgone'){ NET.hostSeen=Math.min(NET.hostSeen,performance.now()-38000); }
   else if(m.t==='pong'){ onPong(m); }
   else if(m.t==='left'){ const r=racers.get(m.id); if(r){scene.remove(r.rh.root);racers.delete(m.id);} S.alive=S.alive.filter(x=>x!==m.id); S.quota=m.quota; updateQual(); }
 }
