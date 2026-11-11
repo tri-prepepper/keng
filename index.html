@@ -873,7 +873,7 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BUILD='2026-11-11j', PROTO=8;
+const BUILD='2026-11-11k', PROTO=8;
 // Several public relays: every device connects to all it can reach and sends on all of them,
 // so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
 const BROKERS=[
@@ -1129,7 +1129,6 @@ $('btnRand').onclick=()=>setMyLook(randomLook(),true);
 $('btnReset').onclick=()=>setMyLook({},true);
 $('btnFace').onclick=()=>{ camYaw+=Math.PI; };
 $('btnCFold').onclick=()=>{ const f=$('cBody').classList.toggle('hidden'); $('btnCFold').textContent=f?'＋':'－'; };
-if(isTouch){ $('cBody').classList.add('hidden'); $('btnCFold').textContent='＋'; }
 function updateCustomSel(){
   const me=S.roster.get(S.myId); if(!me)return; const L=me.look||cleanLook({}), cur={...L,col:me.color};
   document.querySelectorAll('#custom [data-k]').forEach(e=>{ const k=e.dataset.k; e.classList.toggle('sel',String(cur[k])===e.dataset.v); });
