@@ -192,7 +192,7 @@ const hex = c => '#'+c.toString(16).padStart(6,'0');
 const COLORS=[0xff4d6d,0x4dabf7,0xffd43b,0x51cf66,0xb197fc,0xff922b,0x22b8cf,0xf783ac,0x94d82d,0x748ffc,0xff8787,0x38d9a9,0xda77f2,0xffa94d,0x20c997,0x5c7cfa];
 const BOT_NAMES=['깡총이','캥캥','점프왕','주머니','호주짱','뜀뛰기','통통이','꼬리짱','깡총킹','뛰뛰','루루','번개발','꼬마캥','대장캥','슝슝','캥챔프'];
 const ROUND_NAMES=['','구름 대시','해머 & 게이트','정상 결전'];
-const ROUND_TIME=150;
+const ROUND_TIME=180;
 const R=0.7, GRAV=32, JUMP=11.5, SPEED=9.5;
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
@@ -361,88 +361,67 @@ function startArea(color){
 const wp=(z,xs,w=0)=>C.wps.push({z,xs:Array.isArray(xs)?xs:[xs],w});
 const cp=(z,x,y)=>C.cps.push({z,x,y});
 
+/* ---------- random course generator: segments are shuffled & tuned per round from the shared seed ---------- */
+const PAL=[0xff8fab,0x74c0fc,0xffe066,0x8ce99a,0xb197fc,0xffa94d,0x63e6be,0xffa8a8,0x91a7ff,0xffd8a8,0xe599f7,0x96f2d7];
+function makeGen(rng){
+  const st={z:11,y:0,x:0}, R=(a,b)=>a+rng()*(b-a), pick=a=>a[Math.floor(rng()*a.length)], col=()=>pick(PAL);
+  const maybePU=(x,y,z,p=.45)=>{ if(rng()<p) powerup(x,y,z); };
+  const entryCp=()=>cp(st.z-1.2,st.x,st.y);
+  const SEG={
+    gaps(){ entryCp(); const n=2+Math.floor(rng()*3);
+      for(let i=0;i<n;i++){ const gap=R(2.6,4.2), w=R(10,15), d=R(6,9), dy=pick([0,0,.6,-.6]), x=clamp(st.x+R(-2.5,2.5),-3,3);
+        const top=st.y+dy, zc=st.z+gap+d/2; plat(x,top,zc,w,2,d,col()); wp(zc,x,w-5); if(i===1)maybePU(x+R(-2,2),top,zc,.6);
+        st.z=zc+d/2; st.y=top; st.x=x; } },
+    sweeper(){ entryCp(); const size=R(20,23), zc=st.z+2+size/2; plat(0,st.y,zc,size,2,size,col());
+      if(rng()<.4){ const sp=R(1.1,1.5); sweeper(-5.6,st.y,zc,4.4,sp,0xff4d6d); sweeper(5.6,st.y,zc,4.4,-sp,0x4dabf7); wp(zc-size/2+2,0,8); wp(zc,0,1.2); wp(zc+size/2-2,0,8); }
+      else{ sweeper(0,st.y,zc,size/2-.6,(rng()<.5?-1:1)*R(1.1,1.8),pick([0xff4d6d,0xff6b6b,0x845ef7])); wp(zc-size/2+3,0,size-6); wp(zc,0,size-6); wp(zc+size/2-3,0,size-6); }
+      maybePU(R(-6,6),st.y,zc-size/2+2,.4); st.z=zc+size/2; st.x=0; },
+    movers(){ entryCp(); const side=pick([-1,1]), z0=st.z+2;
+      plat(0,st.y,z0+3,20,2,6,col()); const e=z0+6;               // entry ledge
+      const n=2+Math.floor(rng()*2), sp=R(1,1.5); let z=e;
+      for(let i=0;i<n;i++){ z+=3.5; mover(side*-2,st.y,z+3,6,1,6,col(),'x',R(3.5,4.5),sp,i*Math.PI); z+=6; }
+      const land=z+4; plat(side*8.5,st.y,(e+land)/2,1.6,1,land-e,col());   // safe side beam (bots use it)
+      wp(e-1,side*8.5,0); wp((e+land)/2,side*8.5,0); wp(land-.5,side*8.5,0);
+      plat(0,st.y,land+5,18,2,10,col()); wp(land+5,0,10); maybePU(R(-5,5),st.y,land+5,.5); st.z=land+10; st.x=0; },
+    pads(){ entryCp(); const zc=st.z+2+6; plat(0,st.y,zc,18,2,12,col()); const pz=zc+3.5, up=pick([3.8,4.5,5]);
+      const xs=pick([[-5,0,5],[-4,4],[-6,6]]); xs.forEach(x=>pad(x,st.y,pz)); wp(zc-3,xs,.2); wp(pz,xs,0);
+      maybePU(0,st.y,zc-3,.4);
+      const ls=pz+7.5, d=R(14,18); st.y+=up; plat(0,st.y,ls+d/2,16,2,d,col()); wp(ls+3,0,8); wp(ls+d-2,0,8); cp(ls+2,0,st.y); st.z=ls+d; st.x=0; },
+    hammers(){ entryCp(); const n=2+Math.floor(rng()*2), len=n*9+6, zc=st.z+2+len/2;
+      plat(0,st.y,zc,8,2,len,col());
+      for(let i=0;i<n;i++){ const hz=st.z+2+6+i*9; hammer(0,hz,st.y,6.5,R(1.05,1.25),R(1.8,2.5),rng()*6.28,8); wp(hz-4,0,4); }
+      wp(st.z+2+len-2,0,4); cp(st.z+3,0,st.y); st.z+=2+len; st.x=0; },
+    gates(){ entryCp(); const rows=2+Math.floor(rng()*2), len=rows*12+6, z0=st.z+1;
+      plat(0,st.y,z0+len/2,20,2,len,col());
+      for(let i=0;i<rows;i++){ const gz=z0+7+i*12; gateRow(gz,st.y,20,5,rng); wp(gz-4,0,14); wp(gz+.5,0,17); cp(gz-5,0,st.y); }
+      wp(z0+len-2,0,12); maybePU(R(-6,6),st.y,z0+3,.5); st.z=z0+len; st.x=0; },
+    stairs(){ entryCp(); const n=3+Math.floor(rng()*2);
+      for(let i=0;i<n;i++){ const zc=st.z+1+3; st.y+=1.5; plat(0,st.y,zc,14,2,6,col()); wp(zc,0,10); st.z=zc+3; }
+      maybePU(R(-4,4),st.y,st.z-3,.5); st.x=0; },
+  };
+  return {st,R,pick,rng,col,run(names){ for(const n of names) SEG[n](); }};
+}
+function shuffle(a,rng){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function finishArea(g){ const {st}=g; cp(st.z-1.2,st.x,st.y); const zc=st.z+2+8; plat(0,st.y,zc,18,2,16,g.col()); finishLine(zc-5,st.y,18); wp(zc+2,0,8); C.endZ=zc-5; }
 function buildR1(rng){
-  const P=[0xff8fab,0x74c0fc,0xffe066,0x8ce99a,0xb197fc,0xffa94d];
-  startArea(P[0]);
-  plat(0,0,19,14,2,8,P[1]); plat(-1.5,.6,30,12,2,8,P[2]); plat(1,1.2,41,14,2,8,P[3]);
-  wp(17,0,9); wp(30,-1.5,7); wp(41,1,9);
-  powerup(-4,.6,30); powerup(2,.6,30);
-  cp(42,1,1.2);
-  plat(0,1.2,58,22,2,22,P[4]); sweeper(0,1.2,58,10.4,(rng()<.5?-1:1)*(1.1+rng()*.4),0xff4d6d);
-  wp(50,0,14); wp(58,0,14); wp(64,-8.5,0);
-  mover(0,1.2,76,6,1,6,P[5],'x',4,1.3,0); mover(0,1.2,85.5,6,1,6,P[1],'x',4,1.3,Math.PI);
-  plat(-8.5,1.2,81,1.6,1,24,P[2]);
-  wp(70,-8.5,0); wp(80,-8.5,0); wp(92,-8.5,0);
-  plat(0,1.2,99,18,2,12,P[0]);
-  pad(-5,1.2,102.5); pad(0,1.2,102.5); pad(5,1.2,102.5);
-  wp(98,[-5,0,5],.2); wp(102.5,[-5,0,5],0);
-  powerup(-7.5,1.2,97); powerup(7.5,1.2,97);
-  cp(96,0,1.2);
-  plat(0,5,119,16,2,18,P[3]);
-  wp(116,0,8); wp(126,0,8);
-  cp(113,0,5);
-  plat(0,5,139,22,2,16,P[4]);
-  sweeper(-5.6,5,139,4.4,1.25,0xff4d6d); sweeper(5.6,5,139,4.4,-1.25,0x4dabf7);
-  wp(133,0,14); wp(139,0,1.2); wp(145,0,14);
-  plat(0,5,157,18,2,16,P[1]);
-  finishLine(152,5,18); wp(155,0,8);
-  C.startZ=8; C.endZ=152;
+  startArea(PAL[0]); const g=makeGen(rng);
+  const segs=shuffle(['gaps','sweeper','movers','pads',g.pick(['gaps','stairs','sweeper'])],rng);
+  g.run(segs); finishArea(g); C.startZ=8;
 }
 function buildR2(rng){
-  const P=[0x63e6be,0xffa8a8,0x91a7ff,0xffd8a8,0xe599f7,0x96f2d7];
-  startArea(P[0]);
-  plat(0,0,27,8,2,32,P[1]);
-  [18,27,36].forEach((z,i)=>hammer(0,z,0,6.5,1.15,1.8+rng()*.5,i*2.1+rng(),8));
-  wp(14,0,4); wp(22,0,4); wp(31,0,4); wp(40,0,4);
-  powerup(0,0,13);
-  cp(13,0,0); cp(41,0,0);
-  plat(0,0,66,20,2,44,P[2]);
-  gateRow(54,0,20,5,rng); gateRow(66,0,20,5,rng); gateRow(78,0,20,5,rng);
-  wp(48,0,16); wp(54.5,0,17); wp(60,0,14); wp(66.5,0,17); wp(72,0,14); wp(78.5,0,17); wp(83,[-4,4],.5);
-  cp(46,0,0); cp(58,0,0); cp(70,0,0); cp(82,0,0);
-  pad(-4,0,86); pad(4,0,86);
-  wp(86,[-4,4],0);
-  plat(0,4,102,14,2,18,P[3]);
-  wp(100,0,8); cp(97,0,4);
-  powerup(-5,4,108); powerup(5,4,108);
-  plat(0,4,126,22,2,22,P[4]);
-  sweeper(0,4,126,10.4,-(1.4+rng()*.4),0xff6b6b);
-  wp(117,0,16); wp(126,0,16); wp(135,0,16);
-  cp(108,0,4);
-  plat(0,4,147,18,2,16,P[5]);
-  finishLine(143,4,18); wp(146,0,8);
-  C.startZ=8; C.endZ=143;
+  startArea(PAL[6]); const g=makeGen(rng);
+  const segs=shuffle(['hammers','gates',...shuffle(['gaps','sweeper','pads','movers','stairs'],rng).slice(0,2)],rng);
+  g.run(segs); finishArea(g); C.startZ=8;
 }
 function buildR3(rng){
-  const P=[0xffd43b,0xff8787,0x74c0fc,0xb2f2bb,0xd0bfff,0xffc9c9];
-  startArea(P[2]);
-  plat(0,1.5,16,14,2,6,P[0]); plat(0,3,23,14,2,6,P[1]); plat(0,4.5,30,14,2,6,P[3]); plat(0,6,37,14,2,6,P[4]);
-  wp(16,0,10); wp(23,0,10); wp(30,0,10); wp(37,0,10);
-  cp(36,0,6);
-  plat(0,6,52,8,2,22,P[5]);
-  hammer(0,47,6,6.5,1.2,2.0,rng()*3,8); hammer(0,57,6,6.5,1.2,2.2,rng()*3+1.5,8);
-  wp(44,0,4); wp(52,0,4); wp(61,0,4);
-  plat(0,6,70,16,2,12,P[0]);
-  pad(-4,6,73); pad(4,6,73);
-  wp(67,[-4,4],.3); wp(73,[-4,4],0);
-  cp(66,0,6);
-  plat(0,11,86,16,2,12,P[1]);
-  pad(-4,11,89); pad(4,11,89);
-  wp(84,[-4,4],.3); wp(89,[-4,4],0);
-  cp(83,0,11);
-  plat(0,16,102,16,2,12,P[3]);
-  wp(100,0,8); wp(106,0,8);
-  cp(99,0,16);
-  powerup(-5,16,104); powerup(5,16,104); powerup(0,16,104);
-  plat(0,16,122,22,2,22,P[4]);
-  sweeper(0,16,122,10.4,1.7+rng()*.3,0xff4d6d);
-  wp(113,0,16); wp(122,0,16); wp(131,0,16);
-  plat(0,17.2,146,20,2,20,P[0]);
-  hammer(0,141,17.2,6.5,1.25,2.3,rng()*3,10);
-  goldenGate(152,17.2);
-  wp(138,0,10); wp(143,0,6); wp(150,0,1.5); wp(152.5,0,0);
-  cp(138,0,17.2);
-  C.startZ=8; C.endZ=152;
+  startArea(PAL[1]); const g=makeGen(rng), {st}=g;
+  const segs=shuffle(['stairs','hammers','pads','pads','sweeper',...(rng()<.4?[g.pick(['gaps','gates','movers'])]:[])],rng);
+  g.run(segs);
+  // summit with golden gate
+  cp(st.z-1.2,st.x,st.y); const top=st.y+1.2, zc=st.z+3+10; plat(0,top,zc,20,2,20,PAL[2]);
+  if(rng()<.7) hammer(0,zc-5,top,6.5,1.25,g.R(2,2.5),rng()*6.28,10);
+  goldenGate(zc+6,top); wp(zc-8,0,10); wp(zc-3,0,6); wp(zc+4,0,1.5); wp(zc+6.5,0,0); cp(zc-8,0,top);
+  C.startZ=8; C.endZ=zc+6;
 }
 function buildLobbyWorld(){
   newCourse();
@@ -725,7 +704,7 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BUILD='2026-11-11d', PROTO=5;
+const BUILD='2026-11-11e', PROTO=6;
 // Several public relays: every device connects to all it can reach and sends on all of them,
 // so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
 const BROKERS=[
@@ -1079,7 +1058,7 @@ function tick(now,draw){
   if(draw) renderer.render(scene,camera);
 }
 requestAnimationFrame(frame);
-window.__NET=NET; window.__S=S; window.__racers=racers; window.__C=()=>C;
+window.__build=buildCourse; window.__NET=NET; window.__S=S; window.__racers=racers; window.__C=()=>C;
 </script>
 </body>
 </html>
