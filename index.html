@@ -42,7 +42,8 @@ input:focus,select:focus{border-color:#748ffc}
 .room .rn{flex:1;font-weight:900;font-size:14px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .room .rs{font-size:11px;font-weight:800;color:#868e96;display:block}
 .room .rc{font-weight:900;font-size:14px;color:#4c6ef5;white-space:nowrap}
-.room .mini{font-size:13px;padding:7px 12px}
+.room .mini{font-size:17px;padding:11px 22px;border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.room{padding:10px 12px}
 .room.full{opacity:.55}.room.inv{outline:3px solid #ffd43b}
 .roomEmpty{font-size:13px;color:#868e96;font-weight:700;padding:14px 4px}
 #plist{list-style:none;text-align:left;margin-top:6px;max-height:240px;overflow:auto}
@@ -113,10 +114,9 @@ input:focus,select:focus{border-color:#748ffc}
     <div class="sub">☁️ 스카이 서밋 · 파티 레이스 ☁️</div>
     <div class="label">닉네임</div>
     <input id="nameIn" maxlength="10" placeholder="닉네임 입력">
-    <button class="btn b-pink" id="btnHost">🏁 방 만들기</button>
+    <button class="btn b-pink" id="btnHost" style="width:auto;display:inline-block;padding:8px 22px;font-size:15px;margin-top:12px">🏁 방 만들기</button>
     <div class="label" style="display:flex;justify-content:space-between"><span>🏠 열려 있는 방</span><span id="roomCnt" style="color:#4c6ef5"></span></div>
     <div id="roomList"><div class="roomEmpty">방 목록을 불러오는 중…</div></div>
-    <button class="btn b-green" id="btnSolo">🤖 혼자 연습 (봇과 대결)</button>
     <div class="err" id="menuErr"></div>
     <div class="help" id="netStat" style="margin-top:4px;font-size:11px"></div>
     <div class="help">WASD/방향키 이동 · Space 점프 · Shift 다이브 · E 아이템 · 마우스 드래그로 시점 회전<br>3라운드를 통과하고 정상의 황금 문을 가장 먼저 터뜨리세요!</div>
@@ -715,7 +715,7 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BUILD='2026-11-11f', PROTO=7;
+const BUILD='2026-11-11g', PROTO=7;
 // Several public relays: every device connects to all it can reach and sends on all of them,
 // so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
 const BROKERS=[
@@ -940,7 +940,7 @@ function renderLobby(){
 }
 $('btnHost').onclick=()=>{initAudio();hostGame();};
 $('maxSel').onchange=()=>{ S.maxP=Math.max(+$('maxSel').value,humanCount()); renderLobby(); if(S.isHost&&!S.solo) bcast(lobbyMsg()); };
-$('btnSolo').onclick=()=>{ initAudio(); stopBrowse(); S.myName=getName(); S.solo=true; S.isHost=true; S.myId='me'; S.roster.clear(); addHuman('me',S.myName); NET.code=''; showLobby(); };
+const startSolo=()=>{ initAudio(); stopBrowse(); S.myName=getName(); S.solo=true; S.isHost=true; S.myId='me'; S.roster.clear(); addHuman('me',S.myName); NET.code=''; showLobby(); };
 $('btnCopy').onclick=()=>{ const url=location.href.split('?')[0]+'?room='+NET.code; const txt=location.protocol==='file:'?NET.code:url;
   navigator.clipboard?.writeText(txt).then(()=>{$('btnCopy').textContent='✅';setTimeout(()=>$('btnCopy').textContent='링크',1500);}).catch(()=>prompt('복사하세요',txt)); };
 $('btnFold').onclick=()=>{ const f=$('lpBody').classList.toggle('hidden'); $('btnFold').textContent=f?'＋':'－'; };
