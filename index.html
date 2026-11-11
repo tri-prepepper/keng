@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>코뿔소 러시: 스카이 서밋</title>
+<title>캥거루 러시: 스카이 서밋</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#8ec5fc;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
@@ -13,7 +13,7 @@ canvas{display:block}
 .panel{background:rgba(255,255,255,.94);border-radius:30px;padding:26px 30px;width:min(450px,92vw);max-height:92vh;overflow:auto;box-shadow:0 24px 70px rgba(30,30,110,.4);text-align:center;border:5px solid #fff}
 h1{font-size:38px;line-height:1.02;color:#ff4d6d;text-shadow:3px 3px 0 #ffd43b;font-weight:900;letter-spacing:-1px}
 .sub{color:#5c6bc0;font-weight:800;margin:6px 0 18px;font-size:15px}
-.rhino{font-size:56px;display:block;animation:bob 1.2s ease-in-out infinite}
+.mascot{font-size:56px;display:block;animation:bob 1.2s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(-8px) rotate(-6deg)}}
 input,select{width:100%;padding:12px 14px;border-radius:14px;border:3px solid #dbe4ff;font-size:17px;font-weight:700;outline:none;font-family:inherit;background:#fff;color:#333}
 input:focus,select:focus{border-color:#748ffc}
@@ -99,8 +99,8 @@ input:focus,select:focus{border-color:#748ffc}
 <!-- MENU -->
 <div id="menu" class="screen">
   <div class="panel">
-    <span class="rhino">🦏</span>
-    <h1>코뿔소 러시</h1>
+    <span class="mascot">🦘</span>
+    <h1>캥거루 러시</h1>
     <div class="sub">☁️ 스카이 서밋 · 파티 레이스 ☁️</div>
     <div class="label">닉네임</div>
     <input id="nameIn" maxlength="10" placeholder="닉네임 입력">
@@ -117,7 +117,7 @@ input:focus,select:focus{border-color:#748ffc}
 <!-- LOBBY -->
 <div id="lobby" class="hidden">
   <div class="lobbyPanel" id="lobbyPanel">
-    <div class="lpHead"><span>🦏 대기실 <span id="pcount"></span></span><button class="mini b-gray" id="btnFold" title="접기/펼치기">－</button></div>
+    <div class="lpHead"><span>🦘 대기실 <span id="pcount"></span></span><button class="mini b-gray" id="btnFold" title="접기/펼치기">－</button></div>
     <div id="lpBody">
       <div id="codeWrap" class="lpRow"><span class="lpLbl">방 코드</span><b id="codeShow" class="lpCode">-----</b><button class="mini b-blue" id="btnCopy">복사</button></div>
       <ul id="plist"></ul>
@@ -133,7 +133,7 @@ input:focus,select:focus{border-color:#748ffc}
   </div>
 </div>
 
-<div id="lobbyTip" class="hidden">🦏 대기실 — 자유롭게 뛰어놀며 기다리세요 (WASD · Space · Shift)</div>
+<div id="lobbyTip" class="hidden">🦘 대기실 — 자유롭게 깡충깡충 뛰어놀며 기다리세요 (WASD · Space · Shift)</div>
 
 <!-- RESULTS -->
 <div id="results" class="screen hidden" style="background:rgba(30,30,90,.35)">
@@ -190,7 +190,7 @@ const lerpAngle = (a,b,t) => { const d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Ma
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const hex = c => '#'+c.toString(16).padStart(6,'0');
 const COLORS=[0xff4d6d,0x4dabf7,0xffd43b,0x51cf66,0xb197fc,0xff922b,0x22b8cf,0xf783ac,0x94d82d,0x748ffc,0xff8787,0x38d9a9,0xda77f2,0xffa94d,0x20c997,0x5c7cfa];
-const BOT_NAMES=['뿔뿔이','쿵쾅','돌진왕','무쇠뿔','구름타','점프맨','통통이','헬멧군','질주니','뭉게','번개뿔','꼬마뿔','대장뿔','슝슝','뿔챔프','코순이'];
+const BOT_NAMES=['깡총이','캥캥','점프왕','주머니','호주짱','뜀뛰기','통통이','꼬리짱','깡총킹','뛰뛰','루루','번개발','꼬마캥','대장캥','슝슝','캥챔프'];
 const ROUND_NAMES=['','구름 대시','해머 & 게이트','정상 결전'];
 const ROUND_TIME=150;
 const R=0.7, GRAV=32, JUMP=11.5, SPEED=9.5;
@@ -234,29 +234,34 @@ const G={sph:new THREE.SphereGeometry(1,20,14),box:new THREE.BoxGeometry(1,1,1),
 
 /* ================= RHINO MODEL ================= */
 function part(geo,m,sx,sy,sz,x,y,z,parent){const o=new THREE.Mesh(geo,m);o.scale.set(sx,sy,sz);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o;}
-function makeRhino(color){
+function makeKangaroo(color){
   const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
-  const skin=mat(0x9ba5b4), col=mat(color), dark=mat(0x1e1e24), horn=mat(0xfff1d0), white=mat(0xffffff);
-  part(G.sph,skin,.62,.56,.82,0,.98,-.05,body);
-  part(G.sph,col,.66,.5,.58,0,1.0,-.08,body);           // jersey
-  part(G.sph,white,.2,.2,.04,0,1.06,-.66,body).scale.set(.22,.22,.05); // jersey badge back
-  const head=new THREE.Group(); head.position.set(0,1.18,.66); body.add(head);
-  part(G.sph,skin,.42,.38,.48,0,0,.08,head);
-  part(G.sph,skin,.3,.26,.32,0,-.1,.46,head);
-  const h1=part(G.cone,horn,.12,.42,.12,0,.14,.66,head); h1.rotation.x=.55;
-  const h2=part(G.cone,horn,.07,.2,.07,0,.2,.4,head); h2.rotation.x=.4;
-  part(G.sph,dark,.06,.07,.05,.2,.1,.36,head); part(G.sph,dark,.06,.07,.05,-.2,.1,.36,head);
-  part(G.sph,white,.025,.025,.02,.21,.13,.4,head); part(G.sph,white,.025,.025,.02,-.19,.13,.4,head);
-  part(G.sph,dark,.04,.03,.02,.09,-.12,.77,head); part(G.sph,dark,.04,.03,.02,-.09,-.12,.77,head);
-  for(const s of[-1,1]){const e=part(G.cone,skin,.08,.18,.06,s*.25,.36,-.12,head); e.rotation.z=-s*.4;}
-  part(G.hemi,col,.47,.42,.54,0,.06,.0,head);             // helmet
-  part(G.hemi,white,.12,.44,.56,0,.06,.0,head);           // helmet stripe
-  part(G.box,dark,.5,.05,.12,0,.1,.5,head).visible=false;
-  const legs=[];
-  for(const [x,z] of [[.32,.42],[-.32,.42],[.32,-.45],[-.32,-.45]]){ const lg=new THREE.Group(); lg.position.set(x,.6,z); body.add(lg);
-    part(G.cyl,skin,.16,.6,.16,0,-.3,0,lg); part(G.cyl,dark,.17,.08,.17,0,-.58,0,lg); legs.push(lg); }
-  const tail=part(G.cone,skin,.06,.25,.06,0,1.0,-.88,body); tail.rotation.x=-2.2;
-  return {root,body,head,legs};
+  const fur=mat(0xc8834a), light=mat(0xf3d9b1), col=mat(color), dark=mat(0x2b1d14), white=mat(0xffffff), pink=mat(0xf4a6a6);
+  part(G.sph,fur,.48,.72,.5,0,1.05,0,body).rotation.x=.25;            // torso
+  part(G.sph,col,.52,.42,.54,0,1.17,-.03,body).rotation.x=.25;        // jersey
+  part(G.sph,light,.33,.44,.2,0,.92,.3,body);                          // belly
+  part(G.sph,light,.31,.19,.17,0,.72,.37,body);                        // pouch
+  part(G.box,dark,.34,.03,.03,0,.83,.47,body);                         // pouch opening
+  part(G.sph,white,.15,.15,.04,0,1.27,-.5,body);                       // jersey badge
+  const head=new THREE.Group(); head.position.set(0,1.8,.26); body.add(head);
+  part(G.sph,fur,.3,.3,.32,0,0,0,head);
+  part(G.sph,light,.19,.16,.25,0,-.08,.27,head);                       // snout
+  part(G.sph,dark,.075,.055,.05,0,-.02,.51,head);                      // nose
+  for(const s of[-1,1]){ part(G.sph,dark,.05,.06,.04,s*.14,.03,.26,head); part(G.sph,white,.02,.02,.015,s*.14+.015,.05,.29,head);
+    const ear=new THREE.Group(); ear.position.set(s*.13,.2,-.06); ear.rotation.z=-s*.28; ear.rotation.x=-.15; head.add(ear);
+    part(G.sph,fur,.09,.32,.055,0,.27,0,ear); part(G.sph,pink,.05,.23,.03,0,.26,.03,ear); }
+  part(G.hemi,col,.33,.27,.35,0,.11,-.02,head);                           // helmet
+  part(G.hemi,white,.08,.28,.36,0,.11,-.02,head);                          // helmet stripe
+  const arms=[], legs=[];
+  for(const s of[-1,1]){
+    const arm=new THREE.Group(); arm.position.set(s*.3,1.38,.3); arm.rotation.x=-.6; body.add(arm);
+    part(G.cyl,fur,.075,.42,.075,0,-.2,0,arm); part(G.sph,dark,.085,.075,.085,0,-.43,0,arm); arms.push(arm);
+    const leg=new THREE.Group(); leg.position.set(s*.27,.62,-.05); body.add(leg);
+    part(G.sph,fur,.24,.38,.32,0,-.06,.02,leg); part(G.cyl,fur,.09,.4,.09,0,-.38,-.08,leg);
+    part(G.box,fur,.18,.1,.64,0,-.57,.17,leg); part(G.box,dark,.19,.04,.12,0,-.6,.47,leg); legs.push(leg);
+  }
+  const tail=part(G.cone,fur,.13,1.05,.13,0,.5,-.65,body); tail.rotation.x=-2.0;
+  return {root,body,head,legs,arms,tail};
 }
 function nameSprite(text,color){
   const c=document.createElement('canvas');c.width=320;c.height=72;const x=c.getContext('2d');
@@ -624,8 +629,8 @@ let camYaw=0,camPitch=.38,camDist=11,shake=0; const camFocus=new V3(0,2,0); let 
 
 function clearRacers(){ for(const r of racers.values()) scene.remove(r.rh.root); racers.clear(); }
 function createRacer(id,info,simulate){
-  const rh=makeRhino(info.color); scene.add(rh.root);
-  const tag=nameSprite(info.name+(id===S.myId?' (나)':''),info.color); tag.position.y=2.45; rh.root.add(tag);
+  const rh=makeKangaroo(info.color); scene.add(rh.root);
+  const tag=nameSprite(info.name+(id===S.myId?' (나)':''),info.color); tag.position.y=2.85; rh.root.add(tag);
   const shield=new THREE.Mesh(G.sph,new THREE.MeshStandardMaterial({color:0x66e0ff,transparent:true,opacity:.28,emissive:0x2288aa})); shield.scale.setScalar(1.35); shield.position.y=1; shield.visible=false; rh.root.add(shield);
   const r={id,info,rh,shield,body:simulate?makeBody():null,pos:new V3(),tp:new V3(),prev:new V3(),yaw:0,tyaw:0,flag:0,legPh:Math.random()*6,spd:0,bot:null};
   racers.set(id,r); return r;
@@ -720,7 +725,7 @@ function backToLobby(){
 }
 
 /* ================= NETWORK (MQTT relay over secure WebSocket — works on any network) ================= */
-const BUILD='2026-11-11c', PROTO=4;
+const BUILD='2026-11-11d', PROTO=5;
 // Several public relays: every device connects to all it can reach and sends on all of them,
 // so two players only need ONE relay in common. Two of them use port 443 (rarely blocked).
 const BROKERS=[
@@ -886,7 +891,7 @@ function sampleRemote(r){
 }
 
 /* ================= UI ================= */
-function getName(){ const n=$('nameIn').value.trim()||('코뿔소'+Math.floor(Math.random()*90+10)); try{localStorage.setItem('rr_name',n);}catch(e){} return n; }
+function getName(){ const n=$('nameIn').value.trim()||('캥거루'+Math.floor(Math.random()*90+10)); try{localStorage.setItem('rr_name',n);}catch(e){} return n; }
 try{ $('nameIn').value=localStorage.getItem('rr_name')||''; }catch(e){}
 $('netStat').textContent='버전 '+BUILD;
 if(location.protocol.startsWith('http')) fetch(location.pathname+'?nocache='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
@@ -991,9 +996,12 @@ function updateRacerVisuals(dt){
     const rh=r.rh; rh.root.position.set(r.pos.x,r.pos.y-R,r.pos.z); rh.root.rotation.y=r.yaw;
     const air=r.flag&2, dive=r.flag&1, stun=r.flag&16, run=Math.min(1,r.spd/7);
     r.legPh+=r.spd*dt*1.7;
-    rh.legs.forEach((lg,i)=>{ const o=(i===0||i===3)?0:Math.PI; lg.rotation.x=air?(i<2?-.7:.7):Math.sin(r.legPh+o)*.9*run; });
+    const hop=Math.sin(r.legPh*.75), up=Math.max(0,hop);   // kangaroo hop: both feet together
+    rh.legs.forEach(lg=>{ lg.rotation.x=air?.55:(-up*.75+(run>.1?.18:0))*run; });
+    rh.arms.forEach(a=>{ a.rotation.x=air?-1.25:-.6-hop*.25*run; });
+    rh.tail.rotation.x=-2.0+(air?.35:hop*.18*run);
     rh.body.rotation.x+=((dive?1.25:air?-.12:0)-rh.body.rotation.x)*Math.min(1,dt*12);
-    rh.body.position.y=dive?.35:Math.abs(Math.sin(r.legPh))*.1*run;
+    rh.body.position.y=dive?.3:up*.5*run;
     rh.body.rotation.z=stun?Math.sin(performance.now()/40)*.35:rh.body.rotation.z*.8;
     rh.head.rotation.y=stun?Math.sin(performance.now()/60)*.5:0;
     r.shield.visible=!!(r.flag&4);
